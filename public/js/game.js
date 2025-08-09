@@ -121,6 +121,8 @@ function showResult(result, won, winAmount, newBalance, xpReward, levelInfo, ran
 async function flipCoin(prediction) {
     if (isFlipping) return;
     
+    console.log('flipCoin called with prediction:', prediction);
+    
     const betAmount = parseInt(document.getElementById('betAmount').value);
     
     if (!betAmount || betAmount <= 0) {
@@ -134,6 +136,7 @@ async function flipCoin(prediction) {
     }
     
     isFlipping = true;
+    console.log('Starting flip with bet:', betAmount, 'prediction:', prediction);
     
     // Disable buttons during flip
     document.getElementById('headsBtn').disabled = true;
@@ -155,6 +158,7 @@ async function flipCoin(prediction) {
         });
         
         const result = await response.json();
+        console.log('API response:', result);
         
         if (result.success) {
             // Animate coin flip
@@ -171,7 +175,7 @@ async function flipCoin(prediction) {
             
             // Show result after animation
             setTimeout(() => {
-                showResult(result.result, result.won, result.winAmount, result.newBalance, result.xpReward, result.levelInfo, result.rankInfo);
+                showResult(result.result, result.won, result.winAmount, result.newBalance, result.xpReward || null, result.levelInfo || null, result.rankInfo || null);
                 isFlipping = false;
                 document.getElementById('headsBtn').disabled = false;
                 document.getElementById('tailsBtn').disabled = false;
@@ -184,6 +188,7 @@ async function flipCoin(prediction) {
             document.getElementById('tailsBtn').disabled = false;
         }
     } catch (error) {
+        console.error('Error in flipCoin:', error);
         showMessage('An error occurred. Please try again.', 'error');
         isFlipping = false;
         document.getElementById('headsBtn').disabled = false;
