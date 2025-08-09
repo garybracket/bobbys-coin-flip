@@ -77,6 +77,28 @@
                         Player Stats
                     </h3>
                     <div class="space-y-4">
+                        <!-- Level and Rank -->
+                        <div class="bg-slate-800/30 rounded-lg border border-slate-700/30 p-3">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-slate-300">Level:</span>
+                                <span class="font-bold text-lg" id="level">1</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-slate-300">Rank:</span>
+                                <span class="font-bold" id="rank">🌱 Novice</span>
+                            </div>
+                            <!-- XP Progress Bar -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs text-slate-400">
+                                    <span>XP Progress</span>
+                                    <span id="xpProgress">0 / 100</span>
+                                </div>
+                                <div class="w-full bg-slate-700/50 rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300" id="xpBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg border border-slate-700/30">
                             <span class="text-slate-300">💰 Balance:</span>
                             <span class="font-bold text-yellow-400 text-lg" id="balance">0</span>

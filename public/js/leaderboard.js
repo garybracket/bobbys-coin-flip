@@ -75,6 +75,11 @@ function displayPodium(leaderboard) {
                 <div class="bg-gradient-card backdrop-blur-lg rounded-lg p-4 border border-slate-700/30 ${actualRank === 1 ? 'ring-2 ring-yellow-400/30' : ''}">
                     <div class="font-orbitron font-bold ${sizeClass} text-white mb-1">${player.username}</div>
                     <div class="text-yellow-400 font-bold mb-2">${player.totalCoins} coins</div>
+                    <div class="mb-2">
+                        <span class="inline-block px-2 py-1 rounded text-xs font-bold" style="color: ${player.rankColor}; background: ${player.rankColor}20; border: 1px solid ${player.rankColor}50;">
+                            ${player.rankEmoji} ${player.rank} (Lv.${player.level})
+                        </span>
+                    </div>
                     <div class="text-xs text-slate-400">
                         ${player.winRate}% win rate • ${player.bestWinStreak} streak
                     </div>
@@ -114,7 +119,10 @@ function displayLeaderboard(leaderboard) {
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center space-x-3">
                             <div class="font-bold text-lg ${rankClass}">${rankDisplay}</div>
-                            <div class="font-semibold text-white">${player.username}</div>
+                            <div>
+                                <div class="font-semibold text-white">${player.username}</div>
+                                <div class="text-xs" style="color: ${player.rankColor};">${player.rankEmoji} ${player.rank} (Lv.${player.level})</div>
+                            </div>
                         </div>
                         <div class="font-bold text-yellow-400">${player.totalCoins}</div>
                     </div>
@@ -126,13 +134,17 @@ function displayLeaderboard(leaderboard) {
                 </div>
 
                 <!-- Desktop Layout -->
-                <div class="hidden md:grid grid-cols-6 gap-4 items-center">
+                <div class="hidden md:grid grid-cols-7 gap-4 items-center">
                     <div class="font-bold text-lg ${rankClass}">${rankDisplay}</div>
-                    <div class="font-semibold text-white">${player.username}</div>
+                    <div>
+                        <div class="font-semibold text-white">${player.username}</div>
+                        <div class="text-xs" style="color: ${player.rankColor};">${player.rankEmoji} ${player.rank} (Lv.${player.level})</div>
+                    </div>
                     <div class="text-center font-bold text-yellow-400">${player.totalCoins}</div>
                     <div class="text-center text-slate-300">${player.gamesPlayed}</div>
                     <div class="text-center text-slate-300">${player.winRate}%</div>
                     <div class="text-center text-slate-300">${player.bestWinStreak}</div>
+                    <div class="text-center text-blue-400 text-sm">${player.totalXP} XP</div>
                 </div>
             </div>
         `;

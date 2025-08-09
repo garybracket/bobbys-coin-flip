@@ -37,10 +37,22 @@ function updateUI() {
         document.getElementById('balance').textContent = currentUser.stats.totalCoins;
         document.getElementById('streak').textContent = currentUser.stats.winStreak;
         document.getElementById('betAmount').max = currentUser.stats.totalCoins;
+        
+        // Update level and rank display
+        if (currentUser.levelInfo && currentUser.rankInfo) {
+            document.getElementById('level').textContent = currentUser.levelInfo.currentLevel;
+            document.getElementById('rank').innerHTML = `${currentUser.rankInfo.emoji} ${currentUser.rankInfo.rank}`;
+            document.getElementById('rank').style.color = currentUser.rankInfo.color;
+            
+            // Update XP progress bar
+            const xpProgress = Math.floor((currentUser.levelInfo.xpIntoLevel / currentUser.levelInfo.xpForLevel) * 100);
+            document.getElementById('xpProgress').textContent = `${currentUser.levelInfo.xpIntoLevel} / ${currentUser.levelInfo.xpForLevel}`;
+            document.getElementById('xpBar').style.width = `${xpProgress}%`;
+        }
     }
 }
 
-function showResult(result, won, winAmount, newBalance) {
+function showResult(result, won, winAmount, newBalance, xpReward, levelInfo, rankInfo) {
     const resultSection = document.getElementById('resultSection');
     
     const bgClass = won ? 'bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-500/30' : 'bg-gradient-to-r from-red-600/20 to-orange-600/20 border-red-500/30';
@@ -49,6 +61,25 @@ function showResult(result, won, winAmount, newBalance) {
     const resultText = won ? 'VICTORY!' : 'DEFEAT!';
     const amountText = won ? `+${winAmount}` : `${winAmount}`;
     const amountColor = won ? 'text-green-400' : 'text-red-400';
+    
+    let levelUpHTML = '';
+    if (xpReward && xpReward.levelUp) {
+        levelUpHTML = `
+            <div class="mt-4 p-4 bg-purple-600/20 border border-purple-500/30 rounded-lg">
+                <div class="text-purple-400 font-bold text-lg mb-2">🎊 LEVEL UP!</div>
+                <div class="text-sm text-purple-300">
+                    Level ${xpReward.oldLevel} → ${xpReward.newLevel}
+                </div>
+            </div>
+        `;
+    }
+    
+    const xpHTML = xpReward ? `
+        <p class="text-slate-200">
+            XP Gained: <span class="font-bold text-blue-400">+${xpReward.xpGained}</span>
+            <span class="text-xs text-slate-400">(${xpReward.reason})</span>
+        </p>
+    ` : '';
     
     resultSection.innerHTML = `
         <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-8 border ${bgClass} shadow-xl animate-pulse-glow">
@@ -65,14 +96,18 @@ function showResult(result, won, winAmount, newBalance) {
                     <p class="text-slate-200">
                         New Balance: <span class="font-bold text-yellow-400">${newBalance}</span>
                     </p>
+                    ${xpHTML}
                 </div>
+                ${levelUpHTML}
                 ${won ? '<div class="mt-4 text-sm text-green-300">🔥 Keep the streak going!</div>' : '<div class="mt-4 text-sm text-slate-400">💪 Better luck next time!</div>'}
             </div>
         </div>
     `;
     
-    // Update user stats
+    // Update user stats and level info
     currentUser.stats.totalCoins = newBalance;
+    if (levelInfo) currentUser.levelInfo = levelInfo;
+    if (rankInfo) currentUser.rankInfo = rankInfo;
     updateUI();
     
     if (newBalance <= 0) {
@@ -133,7 +168,7 @@ async function flipCoin(prediction) {
             
             // Show result after animation
             setTimeout(() => {
-                showResult(result.result, result.won, result.winAmount, result.newBalance);
+                showResult(result.result, result.won, result.winAmount, result.newBalance, result.xpReward, result.levelInfo, result.rankInfo);
                 isFlipping = false;
                 document.getElementById('headsBtn').disabled = false;
                 document.getElementById('tailsBtn').disabled = false;
@@ -161,6 +196,17 @@ window.addEventListener('DOMContentLoaded', async () => {
         
         if (result.success) {
             currentUser = result.user;
+            
+            // Show daily login bonus if applicable
+            if (result.dailyBonus) {
+                showMessage(`Daily Login Bonus: +${result.dailyBonus.xpGained} XP!`, 'success');
+                if (result.dailyBonus.levelUp) {
+                    setTimeout(() => {
+                        showMessage(`🎊 Level Up! Level ${result.dailyBonus.oldLevel} → ${result.dailyBonus.newLevel}`, 'success');
+                    }, 2000);
+                }
+            }
+            
             updateUI();
         } else {
             // Not authenticated, redirect to login

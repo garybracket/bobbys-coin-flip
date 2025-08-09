@@ -36,6 +36,95 @@ function generateMatchId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
+// Leveling system functions
+function calculateLevel(totalXP) {
+    let level = 1;
+    let xpRequired = 0;
+    
+    while (totalXP >= xpRequired) {
+        if (level <= 10) {
+            xpRequired += 100;
+        } else if (level <= 25) {
+            xpRequired += 200;
+        } else if (level <= 50) {
+            xpRequired += 400;
+        } else {
+            xpRequired += 800;
+        }
+        
+        if (totalXP >= xpRequired) {
+            level++;
+        }
+    }
+    
+    return level;
+}
+
+function calculateXPToNext(currentXP) {
+    const currentLevel = calculateLevel(currentXP);
+    let xpForThisLevel = 0;
+    
+    // Calculate XP needed to reach current level
+    for (let i = 1; i < currentLevel; i++) {
+        if (i <= 10) {
+            xpForThisLevel += 100;
+        } else if (i <= 25) {
+            xpForThisLevel += 200;
+        } else if (i <= 50) {
+            xpForThisLevel += 400;
+        } else {
+            xpForThisLevel += 800;
+        }
+    }
+    
+    // Calculate XP needed for next level
+    let xpForNextLevel;
+    if (currentLevel <= 10) {
+        xpForNextLevel = 100;
+    } else if (currentLevel <= 25) {
+        xpForNextLevel = 200;
+    } else if (currentLevel <= 50) {
+        xpForNextLevel = 400;
+    } else {
+        xpForNextLevel = 800;
+    }
+    
+    const xpIntoCurrentLevel = currentXP - xpForThisLevel;
+    const xpNeeded = xpForNextLevel - xpIntoCurrentLevel;
+    
+    return {
+        currentLevel,
+        xpIntoLevel: xpIntoCurrentLevel,
+        xpNeeded,
+        xpForLevel: xpForNextLevel
+    };
+}
+
+function getRankInfo(level) {
+    if (level >= 51) return { rank: 'Legend', color: '#FFD700', emoji: '👑' };
+    if (level >= 36) return { rank: 'Master', color: '#9333EA', emoji: '🏆' };
+    if (level >= 21) return { rank: 'Expert', color: '#DC2626', emoji: '⭐' };
+    if (level >= 11) return { rank: 'Apprentice', color: '#2563EB', emoji: '🎯' };
+    return { rank: 'Novice', color: '#059669', emoji: '🌱' };
+}
+
+function awardXP(user, xpAmount, reason = '') {
+    const oldLevel = calculateLevel(user.stats.totalXP || 0);
+    user.stats.totalXP = (user.stats.totalXP || 0) + xpAmount;
+    const newLevel = calculateLevel(user.stats.totalXP);
+    
+    const levelUp = newLevel > oldLevel;
+    
+    return {
+        xpGained: xpAmount,
+        totalXP: user.stats.totalXP,
+        oldLevel,
+        newLevel,
+        levelUp,
+        reason
+    };
+}
+
 // Session middleware for Socket.IO
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'bobbys-coin-flip-secret-key',
@@ -108,6 +197,8 @@ app.post('/api/register', async (req, res) => {
       winStreak: 0,
       bestWinStreak: 0,
       totalCoins: 100,
+      totalXP: 0,
+      lastLogin: new Date().toISOString(),
       multiplayerStats: {
         matchesPlayed: 0,
         matchesWon: 0,
@@ -148,12 +239,32 @@ app.get('/api/user', (req, res) => {
   }
   
   const user = users.get(req.session.userId);
+  
+  // Check for daily login bonus
+  const now = new Date();
+  const lastLogin = new Date(user.stats.lastLogin || user.stats.created);
+  const daysSinceLogin = Math.floor((now - lastLogin) / (24 * 60 * 60 * 1000));
+  
+  let dailyBonus = null;
+  if (daysSinceLogin >= 1) {
+    const xpReward = awardXP(user, 20, 'Daily Login Bonus');
+    user.stats.lastLogin = now.toISOString();
+    dailyBonus = xpReward;
+  }
+  
+  // Calculate level info
+  const levelInfo = calculateXPToNext(user.stats.totalXP || 0);
+  const rankInfo = getRankInfo(levelInfo.currentLevel);
+  
   res.json({ 
     success: true, 
     user: {
       username: user.username,
-      stats: user.stats
-    }
+      stats: user.stats,
+      levelInfo: levelInfo,
+      rankInfo: rankInfo
+    },
+    dailyBonus
   });
 });
 
@@ -178,15 +289,26 @@ app.post('/api/flip', (req, res) => {
   user.stats.gamesPlayed++;
   user.stats.totalCoins += winAmount;
   
+  // Award XP
+  let xpReward;
   if (won) {
     user.stats.gamesWon++;
     user.stats.winStreak++;
     if (user.stats.winStreak > user.stats.bestWinStreak) {
       user.stats.bestWinStreak = user.stats.winStreak;
     }
+    
+    // Base win XP + streak bonus
+    let xpAmount = 10;
+    if (user.stats.winStreak >= 5) xpAmount += 5;
+    if (user.stats.winStreak >= 10) xpAmount += 10;
+    if (user.stats.winStreak >= 20) xpAmount += 15;
+    
+    xpReward = awardXP(user, xpAmount, `Win (${user.stats.winStreak} streak)`);
   } else {
     user.stats.gamesLost++;
     user.stats.winStreak = 0;
+    xpReward = awardXP(user, 2, 'Participation');
   }
   
   // Add to game history
@@ -205,26 +327,47 @@ app.post('/api/flip', (req, res) => {
     history.splice(50);
   }
   
+  // Calculate level info
+  const levelInfo = calculateXPToNext(user.stats.totalXP);
+  const rankInfo = getRankInfo(levelInfo.currentLevel);
+  
   res.json({
     success: true,
     result,
     won,
     winAmount,
     newBalance: user.stats.totalCoins,
-    stats: user.stats
+    stats: user.stats,
+    xpReward,
+    levelInfo,
+    rankInfo
   });
 });
 
 app.get('/api/leaderboard', (req, res) => {
   const leaderboard = Array.from(users.values())
-    .map(user => ({
-      username: user.username,
-      totalCoins: user.stats.totalCoins,
-      gamesPlayed: user.stats.gamesPlayed,
-      winRate: user.stats.gamesPlayed > 0 ? (user.stats.gamesWon / user.stats.gamesPlayed * 100).toFixed(1) : 0,
-      bestWinStreak: user.stats.bestWinStreak
-    }))
-    .sort((a, b) => b.totalCoins - a.totalCoins)
+    .map(user => {
+      const levelInfo = calculateXPToNext(user.stats.totalXP || 0);
+      const rankInfo = getRankInfo(levelInfo.currentLevel);
+      
+      return {
+        username: user.username,
+        totalCoins: user.stats.totalCoins,
+        gamesPlayed: user.stats.gamesPlayed,
+        winRate: user.stats.gamesPlayed > 0 ? (user.stats.gamesWon / user.stats.gamesPlayed * 100).toFixed(1) : 0,
+        bestWinStreak: user.stats.bestWinStreak,
+        level: levelInfo.currentLevel,
+        totalXP: user.stats.totalXP || 0,
+        rank: rankInfo.rank,
+        rankColor: rankInfo.color,
+        rankEmoji: rankInfo.emoji
+      };
+    })
+    .sort((a, b) => {
+      // Sort by level first, then by coins
+      if (a.level !== b.level) return b.level - a.level;
+      return b.totalCoins - a.totalCoins;
+    })
     .slice(0, 10);
   
   res.json({ success: true, leaderboard });
@@ -622,6 +765,9 @@ function endMatch(match) {
   const user1 = users.get(match.player1.username);
   const user2 = users.get(match.player2.username);
   
+  let player1XP = null;
+  let player2XP = null;
+  
   if (user1 && user2) {
     user1.stats.multiplayerStats.matchesPlayed++;
     user2.stats.multiplayerStats.matchesPlayed++;
@@ -631,6 +777,10 @@ function endMatch(match) {
     user2.stats.multiplayerStats.roundsWon += match.player2Score;
     user2.stats.multiplayerStats.roundsLost += match.player1Score;
     
+    // Award XP for rounds won
+    player1XP = awardXP(user1, match.player1Score * 15, `${match.player1Score} rounds won`);
+    player2XP = awardXP(user2, match.player2Score * 15, `${match.player2Score} rounds won`);
+    
     if (winner) {
       if (winner === match.player1.username) {
         user1.stats.multiplayerStats.matchesWon++;
@@ -639,6 +789,13 @@ function endMatch(match) {
         // Transfer coins
         user1.stats.totalCoins += match.betAmount;
         user2.stats.totalCoins -= match.betAmount;
+        
+        // Winner bonus XP
+        const winnerXP = awardXP(user1, 50, 'Multiplayer victory');
+        player1XP.xpGained += winnerXP.xpGained;
+        player1XP.totalXP = winnerXP.totalXP;
+        player1XP.newLevel = winnerXP.newLevel;
+        player1XP.levelUp = player1XP.levelUp || winnerXP.levelUp;
       } else {
         user2.stats.multiplayerStats.matchesWon++;
         user1.stats.multiplayerStats.matchesLost++;
@@ -646,6 +803,13 @@ function endMatch(match) {
         // Transfer coins
         user2.stats.totalCoins += match.betAmount;
         user1.stats.totalCoins -= match.betAmount;
+        
+        // Winner bonus XP
+        const winnerXP = awardXP(user2, 50, 'Multiplayer victory');
+        player2XP.xpGained += winnerXP.xpGained;
+        player2XP.totalXP = winnerXP.totalXP;
+        player2XP.newLevel = winnerXP.newLevel;
+        player2XP.levelUp = player2XP.levelUp || winnerXP.levelUp;
       }
     }
   }
@@ -666,12 +830,24 @@ function endMatch(match) {
   };
   
   if (player1Socket) {
-    matchResult.newBalance = user1?.stats.totalCoins;
-    player1Socket.emit('match_ended', matchResult);
+    const player1Result = {
+      ...matchResult,
+      newBalance: user1?.stats.totalCoins,
+      xpReward: player1XP,
+      levelInfo: calculateXPToNext(user1?.stats.totalXP || 0),
+      rankInfo: getRankInfo(calculateLevel(user1?.stats.totalXP || 0))
+    };
+    player1Socket.emit('match_ended', player1Result);
   }
   if (player2Socket) {
-    matchResult.newBalance = user2?.stats.totalCoins;
-    player2Socket.emit('match_ended', matchResult);
+    const player2Result = {
+      ...matchResult,
+      newBalance: user2?.stats.totalCoins,
+      xpReward: player2XP,
+      levelInfo: calculateXPToNext(user2?.stats.totalXP || 0),
+      rankInfo: getRankInfo(calculateLevel(user2?.stats.totalXP || 0))
+    };
+    player2Socket.emit('match_ended', player2Result);
   }
   
   // Reset player statuses

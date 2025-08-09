@@ -348,6 +348,33 @@ function showMatchResult(result) {
         resultText = 'Defeat! Better Luck Next Time';
     }
     
+    let levelUpHTML = '';
+    if (result.xpReward && result.xpReward.levelUp) {
+        levelUpHTML = `
+            <div class="mt-4 p-4 bg-purple-600/20 border border-purple-500/30 rounded-lg">
+                <div class="text-purple-400 font-bold text-lg mb-2">🎊 LEVEL UP!</div>
+                <div class="text-sm text-purple-300">
+                    Level ${result.xpReward.oldLevel} → ${result.xpReward.newLevel}
+                </div>
+            </div>
+        `;
+    }
+    
+    const xpHTML = result.xpReward ? `
+        <div class="text-lg text-blue-400">
+            ⭐ XP Gained: <span class="font-bold">+${result.xpReward.xpGained}</span>
+            <div class="text-xs text-slate-400">(${result.xpReward.reason})</div>
+        </div>
+    ` : '';
+    
+    const rankHTML = result.rankInfo ? `
+        <div class="text-sm text-slate-300">
+            Rank: <span class="font-bold" style="color: ${result.rankInfo.color};">
+                ${result.rankInfo.emoji} ${result.rankInfo.rank} (Level ${result.levelInfo.currentLevel})
+            </span>
+        </div>
+    ` : '';
+    
     matchSection.innerHTML = `
         <div class="text-center">
             <div class="bg-gradient-card backdrop-blur-lg rounded-2xl p-8 border ${bgClass} mx-auto max-w-lg">
@@ -372,7 +399,12 @@ function showMatchResult(result) {
                     <div class="text-lg text-slate-300">
                         New Balance: <span class="font-bold text-yellow-400">${result.newBalance}</span>
                     </div>
+                    
+                    ${xpHTML}
+                    ${rankHTML}
                 </div>
+                
+                ${levelUpHTML}
                 
                 <div class="space-y-3">
                     <button onclick="showSection('lobbySection')" 
