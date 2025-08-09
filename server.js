@@ -548,9 +548,12 @@ io.on('connection', (socket) => {
     const isPlayer1 = match.player1.username === player.username;
     const currentRound = match.rounds[match.currentRound - 1];
     
-    if (currentRound.caller === player.username) {
+    // Validate: Must be the caller and haven't called yet
+    if (currentRound.caller === player.username && !currentRound.callerPrediction) {
       currentRound.callerPrediction = prediction;
       currentRound.status = 'waiting_opponent';
+      
+      console.log(`${player.username} called ${prediction} in round ${match.currentRound}`);
       
       // Notify opponent to make their prediction
       const opponentSocket = isPlayer1 ? 
@@ -572,8 +575,13 @@ io.on('connection', (socket) => {
     
     const currentRound = match.rounds[match.currentRound - 1];
     
-    if (currentRound.caller !== player.username) {
+    // Validate: Must NOT be the caller, caller must have called, and opponent hasn't predicted yet
+    if (currentRound.caller !== player.username && 
+        currentRound.callerPrediction && 
+        !currentRound.opponentPrediction) {
+      
       currentRound.opponentPrediction = prediction;
+      console.log(`${player.username} predicted ${prediction} in round ${match.currentRound}`);
       executeRound(match);
     }
   });

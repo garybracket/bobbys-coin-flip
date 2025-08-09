@@ -130,6 +130,10 @@ function makeCall(prediction) {
             prediction: prediction
         });
         
+        // Disable all call buttons to prevent duplicate calls
+        const callButtons = document.querySelectorAll('button[onclick^="makeCall"]');
+        callButtons.forEach(btn => btn.disabled = true);
+        
         // Update UI to show waiting for opponent
         updateMatchUI();
     }
@@ -141,6 +145,10 @@ function makePrediction(prediction) {
             matchId: currentMatch.matchId,
             prediction: prediction
         });
+        
+        // Disable all prediction buttons to prevent duplicate predictions
+        const predictionButtons = document.querySelectorAll('button[onclick^="makePrediction"]');
+        predictionButtons.forEach(btn => btn.disabled = true);
         
         // Update UI to show waiting for result
         updateMatchUI();
