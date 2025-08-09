@@ -3,24 +3,57 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const path = require('path');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 
 // In-memory storage (replace with database in production)
 const users = new Map();
 const gameHistory = new Map();
 
-// Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(session({
+// Multiplayer game storage
+const onlinePlayers = new Map(); // socketId -> playerData
+const gameLobbies = new Map();   // lobbyId -> lobbyData
+const activeMatches = new Map(); // matchId -> matchData
+const privateRooms = new Map();  // roomCode -> roomData
+
+// Helper functions for game logic
+function generateRoomCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function generateMatchId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Session middleware for Socket.IO
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'bobbys-coin-flip-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
-}));
+  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
+});
+
+// Middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(sessionMiddleware);
 app.use(express.static('public'));
+
+// Share session with Socket.IO
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
 
 // Routes
 app.get('/', (req, res) => {
@@ -34,6 +67,13 @@ app.get('/game', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'game.html'));
 });
 
+app.get('/multiplayer', (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect('/');
+  }
+  res.sendFile(path.join(__dirname, 'public', 'multiplayer.html'));
+});
+
 app.get('/leaderboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
 });
@@ -45,7 +85,7 @@ app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
 
-// API Routes
+// API Routes (existing single-player routes)
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   
@@ -67,7 +107,14 @@ app.post('/api/register', async (req, res) => {
       gamesLost: 0,
       winStreak: 0,
       bestWinStreak: 0,
-      totalCoins: 100, // Starting coins
+      totalCoins: 100,
+      multiplayerStats: {
+        matchesPlayed: 0,
+        matchesWon: 0,
+        matchesLost: 0,
+        roundsWon: 0,
+        roundsLost: 0
+      },
       created: new Date().toISOString()
     }
   });
@@ -110,12 +157,13 @@ app.get('/api/user', (req, res) => {
   });
 });
 
+// Single-player coin flip (existing)
 app.post('/api/flip', (req, res) => {
   if (!req.session.userId) {
     return res.json({ success: false, message: 'Not authenticated' });
   }
   
-  const { bet, prediction } = req.body; // bet amount, prediction: 'heads' or 'tails'
+  const { bet, prediction } = req.body;
   const user = users.get(req.session.userId);
   
   if (bet <= 0 || bet > user.stats.totalCoins) {
@@ -153,7 +201,6 @@ app.post('/api/flip', (req, res) => {
     balanceAfter: user.stats.totalCoins
   });
   
-  // Keep only last 50 games
   if (history.length > 50) {
     history.splice(50);
   }
@@ -192,6 +239,458 @@ app.get('/api/history', (req, res) => {
   res.json({ success: true, history });
 });
 
-app.listen(PORT, () => {
-  console.log(`Bobby's Coin Flip server running on port ${PORT}`);
+// Socket.IO multiplayer functionality
+io.on('connection', (socket) => {
+  const session = socket.request.session;
+  
+  if (!session.userId) {
+    socket.emit('error', 'Not authenticated');
+    return;
+  }
+
+  const username = session.userId;
+  const user = users.get(username);
+  
+  if (!user) {
+    socket.emit('error', 'User not found');
+    return;
+  }
+
+  // Add player to online players
+  onlinePlayers.set(socket.id, {
+    socketId: socket.id,
+    username: username,
+    status: 'online', // online, in_lobby, in_match
+    matchId: null,
+    roomCode: null
+  });
+
+  console.log(`${username} connected to multiplayer`);
+  socket.emit('connected', { username, stats: user.stats });
+
+  // Join multiplayer lobby
+  socket.on('join_lobby', () => {
+    const player = onlinePlayers.get(socket.id);
+    if (player) {
+      player.status = 'in_lobby';
+      socket.join('lobby');
+      
+      // Send lobby info
+      const lobbyPlayers = Array.from(onlinePlayers.values())
+        .filter(p => p.status === 'in_lobby')
+        .map(p => ({
+          username: p.username,
+          status: p.status
+        }));
+      
+      socket.emit('lobby_joined', { players: lobbyPlayers });
+      socket.to('lobby').emit('player_joined_lobby', { username: player.username });
+    }
+  });
+
+  // Quick match (random opponent)
+  socket.on('quick_match', (data) => {
+    const { rounds, betAmount } = data;
+    const player = onlinePlayers.get(socket.id);
+    
+    if (!player) return;
+    
+    // Validate bet amount
+    if (betAmount > user.stats.totalCoins) {
+      socket.emit('error', 'Insufficient coins');
+      return;
+    }
+
+    // Find another player looking for quick match
+    const waitingPlayers = Array.from(onlinePlayers.values())
+      .filter(p => p.status === 'looking_for_match' && p.socketId !== socket.id);
+    
+    if (waitingPlayers.length > 0) {
+      const opponent = waitingPlayers[0];
+      startMatch(player, opponent, rounds, betAmount);
+    } else {
+      player.status = 'looking_for_match';
+      player.matchPrefs = { rounds, betAmount };
+      socket.emit('looking_for_match');
+    }
+  });
+
+  // Create private room
+  socket.on('create_private_room', (data) => {
+    const { rounds, betAmount } = data;
+    const player = onlinePlayers.get(socket.id);
+    
+    if (!player) return;
+    
+    const roomCode = generateRoomCode();
+    privateRooms.set(roomCode, {
+      roomCode,
+      host: player.username,
+      hostSocketId: socket.id,
+      guest: null,
+      guestSocketId: null,
+      rounds,
+      betAmount,
+      status: 'waiting'
+    });
+    
+    player.roomCode = roomCode;
+    player.status = 'hosting_room';
+    
+    socket.emit('room_created', { roomCode });
+  });
+
+  // Join private room
+  socket.on('join_private_room', (data) => {
+    const { roomCode } = data;
+    const player = onlinePlayers.get(socket.id);
+    const room = privateRooms.get(roomCode);
+    
+    if (!player || !room) {
+      socket.emit('error', 'Room not found');
+      return;
+    }
+    
+    if (room.status !== 'waiting') {
+      socket.emit('error', 'Room is not available');
+      return;
+    }
+    
+    if (room.betAmount > user.stats.totalCoins) {
+      socket.emit('error', 'Insufficient coins for this room');
+      return;
+    }
+    
+    // Join room
+    room.guest = player.username;
+    room.guestSocketId = socket.id;
+    room.status = 'ready';
+    
+    player.roomCode = roomCode;
+    player.status = 'in_room';
+    
+    // Notify both players
+    const hostSocket = io.sockets.sockets.get(room.hostSocketId);
+    if (hostSocket) {
+      hostSocket.emit('player_joined_room', { 
+        guest: player.username,
+        ready: true 
+      });
+    }
+    
+    socket.emit('room_joined', { 
+      host: room.host,
+      rounds: room.rounds,
+      betAmount: room.betAmount 
+    });
+    
+    // Start match after short delay
+    setTimeout(() => {
+      const hostPlayer = onlinePlayers.get(room.hostSocketId);
+      const guestPlayer = onlinePlayers.get(room.guestSocketId);
+      if (hostPlayer && guestPlayer) {
+        startMatch(hostPlayer, guestPlayer, room.rounds, room.betAmount);
+      }
+    }, 2000);
+  });
+
+  // Handle match actions
+  socket.on('make_call', (data) => {
+    const { matchId, prediction } = data;
+    const match = activeMatches.get(matchId);
+    const player = onlinePlayers.get(socket.id);
+    
+    if (!match || !player) return;
+    
+    const isPlayer1 = match.player1.username === player.username;
+    const currentRound = match.rounds[match.currentRound - 1];
+    
+    if (currentRound.caller === player.username) {
+      currentRound.callerPrediction = prediction;
+      currentRound.status = 'waiting_opponent';
+      
+      // Notify opponent to make their prediction
+      const opponentSocket = isPlayer1 ? 
+        io.sockets.sockets.get(match.player2.socketId) :
+        io.sockets.sockets.get(match.player1.socketId);
+      
+      if (opponentSocket) {
+        opponentSocket.emit('opponent_called', { prediction });
+      }
+    }
+  });
+
+  socket.on('make_prediction', (data) => {
+    const { matchId, prediction } = data;
+    const match = activeMatches.get(matchId);
+    const player = onlinePlayers.get(socket.id);
+    
+    if (!match || !player) return;
+    
+    const currentRound = match.rounds[match.currentRound - 1];
+    
+    if (currentRound.caller !== player.username) {
+      currentRound.opponentPrediction = prediction;
+      executeRound(match);
+    }
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    const player = onlinePlayers.get(socket.id);
+    if (player) {
+      console.log(`${player.username} disconnected`);
+      
+      // Handle ongoing match
+      if (player.matchId) {
+        const match = activeMatches.get(player.matchId);
+        if (match) {
+          // Forfeit match
+          const opponentSocketId = match.player1.socketId === socket.id ? 
+            match.player2.socketId : match.player1.socketId;
+          
+          const opponentSocket = io.sockets.sockets.get(opponentSocketId);
+          if (opponentSocket) {
+            opponentSocket.emit('opponent_disconnected');
+          }
+          
+          activeMatches.delete(player.matchId);
+        }
+      }
+      
+      // Handle private room
+      if (player.roomCode) {
+        const room = privateRooms.get(player.roomCode);
+        if (room) {
+          privateRooms.delete(player.roomCode);
+        }
+      }
+      
+      onlinePlayers.delete(socket.id);
+      socket.to('lobby').emit('player_left_lobby', { username: player.username });
+    }
+  });
+});
+
+function startMatch(player1, player2, totalRounds, betAmount) {
+  const matchId = generateMatchId();
+  
+  const match = {
+    matchId,
+    player1,
+    player2,
+    totalRounds,
+    betAmount,
+    currentRound: 1,
+    player1Score: 0,
+    player2Score: 0,
+    status: 'active',
+    rounds: [],
+    startTime: new Date().toISOString()
+  };
+  
+  // Initialize rounds
+  for (let i = 1; i <= totalRounds; i++) {
+    match.rounds.push({
+      round: i,
+      caller: i % 2 === 1 ? player1.username : player2.username, // Alternate caller
+      callerPrediction: null,
+      opponentPrediction: null,
+      result: null,
+      winner: null,
+      status: 'waiting_call'
+    });
+  }
+  
+  activeMatches.set(matchId, match);
+  
+  // Update player statuses
+  player1.status = 'in_match';
+  player1.matchId = matchId;
+  player2.status = 'in_match';
+  player2.matchId = matchId;
+  
+  // Notify both players
+  const player1Socket = io.sockets.sockets.get(player1.socketId);
+  const player2Socket = io.sockets.sockets.get(player2.socketId);
+  
+  if (player1Socket && player2Socket) {
+    const matchData = {
+      matchId,
+      opponent: player2.username,
+      totalRounds,
+      betAmount,
+      currentRound: 1,
+      yourTurn: match.rounds[0].caller === player1.username
+    };
+    
+    const matchData2 = {
+      matchId,
+      opponent: player1.username,
+      totalRounds,
+      betAmount,
+      currentRound: 1,
+      yourTurn: match.rounds[0].caller === player2.username
+    };
+    
+    player1Socket.emit('match_started', matchData);
+    player2Socket.emit('match_started', matchData2);
+  }
+}
+
+function executeRound(match) {
+  const currentRound = match.rounds[match.currentRound - 1];
+  
+  // Flip the coin
+  const coinResult = Math.random() < 0.5 ? 'heads' : 'tails';
+  currentRound.result = coinResult;
+  currentRound.status = 'completed';
+  
+  // Determine winner
+  let roundWinner = null;
+  if (currentRound.callerPrediction === coinResult) {
+    roundWinner = currentRound.caller;
+  } else if (currentRound.opponentPrediction === coinResult) {
+    roundWinner = currentRound.caller === match.player1.username ? 
+      match.player2.username : match.player1.username;
+  }
+  
+  currentRound.winner = roundWinner;
+  
+  // Update scores
+  if (roundWinner === match.player1.username) {
+    match.player1Score++;
+  } else if (roundWinner === match.player2.username) {
+    match.player2Score++;
+  }
+  
+  // Notify both players of round result
+  const player1Socket = io.sockets.sockets.get(match.player1.socketId);
+  const player2Socket = io.sockets.sockets.get(match.player2.socketId);
+  
+  const roundResult = {
+    round: match.currentRound,
+    coinResult,
+    callerPrediction: currentRound.callerPrediction,
+    opponentPrediction: currentRound.opponentPrediction,
+    winner: roundWinner,
+    player1Score: match.player1Score,
+    player2Score: match.player2Score
+  };
+  
+  if (player1Socket) player1Socket.emit('round_result', roundResult);
+  if (player2Socket) player2Socket.emit('round_result', roundResult);
+  
+  // Check if match is over
+  const majorityWins = Math.ceil(match.totalRounds / 2);
+  if (match.player1Score >= majorityWins || match.player2Score >= majorityWins || 
+      match.currentRound >= match.totalRounds) {
+    endMatch(match);
+  } else {
+    // Start next round
+    match.currentRound++;
+    const nextRound = match.rounds[match.currentRound - 1];
+    
+    setTimeout(() => {
+      if (player1Socket && player2Socket) {
+        player1Socket.emit('next_round', {
+          round: match.currentRound,
+          yourTurn: nextRound.caller === match.player1.username
+        });
+        player2Socket.emit('next_round', {
+          round: match.currentRound,
+          yourTurn: nextRound.caller === match.player2.username
+        });
+      }
+    }, 3000);
+  }
+}
+
+function endMatch(match) {
+  let winner = null;
+  if (match.player1Score > match.player2Score) {
+    winner = match.player1.username;
+  } else if (match.player2Score > match.player1Score) {
+    winner = match.player2.username;
+  }
+  
+  match.status = 'completed';
+  match.winner = winner;
+  match.endTime = new Date().toISOString();
+  
+  // Update user stats and coins
+  const user1 = users.get(match.player1.username);
+  const user2 = users.get(match.player2.username);
+  
+  if (user1 && user2) {
+    user1.stats.multiplayerStats.matchesPlayed++;
+    user2.stats.multiplayerStats.matchesPlayed++;
+    
+    user1.stats.multiplayerStats.roundsWon += match.player1Score;
+    user1.stats.multiplayerStats.roundsLost += match.player2Score;
+    user2.stats.multiplayerStats.roundsWon += match.player2Score;
+    user2.stats.multiplayerStats.roundsLost += match.player1Score;
+    
+    if (winner) {
+      if (winner === match.player1.username) {
+        user1.stats.multiplayerStats.matchesWon++;
+        user2.stats.multiplayerStats.matchesLost++;
+        
+        // Transfer coins
+        user1.stats.totalCoins += match.betAmount;
+        user2.stats.totalCoins -= match.betAmount;
+      } else {
+        user2.stats.multiplayerStats.matchesWon++;
+        user1.stats.multiplayerStats.matchesLost++;
+        
+        // Transfer coins
+        user2.stats.totalCoins += match.betAmount;
+        user1.stats.totalCoins -= match.betAmount;
+      }
+    }
+  }
+  
+  // Notify players
+  const player1Socket = io.sockets.sockets.get(match.player1.socketId);
+  const player2Socket = io.sockets.sockets.get(match.player2.socketId);
+  
+  const matchResult = {
+    winner,
+    finalScore: {
+      [match.player1.username]: match.player1Score,
+      [match.player2.username]: match.player2Score
+    },
+    coinsWon: winner ? match.betAmount : 0,
+    newBalance: winner === match.player1.username ? user1?.stats.totalCoins : 
+                winner === match.player2.username ? user2?.stats.totalCoins : null
+  };
+  
+  if (player1Socket) {
+    matchResult.newBalance = user1?.stats.totalCoins;
+    player1Socket.emit('match_ended', matchResult);
+  }
+  if (player2Socket) {
+    matchResult.newBalance = user2?.stats.totalCoins;
+    player2Socket.emit('match_ended', matchResult);
+  }
+  
+  // Reset player statuses
+  const player1Data = onlinePlayers.get(match.player1.socketId);
+  const player2Data = onlinePlayers.get(match.player2.socketId);
+  
+  if (player1Data) {
+    player1Data.status = 'online';
+    player1Data.matchId = null;
+  }
+  if (player2Data) {
+    player2Data.status = 'online';
+    player2Data.matchId = null;
+  }
+  
+  // Clean up
+  activeMatches.delete(match.matchId);
+}
+
+server.listen(PORT, () => {
+  console.log(`Bobby's Coin Flip server with multiplayer running on port ${PORT}`);
 });
