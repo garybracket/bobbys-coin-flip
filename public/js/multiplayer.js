@@ -278,6 +278,7 @@ function showRoundResult(result) {
     // Animate coin
     const flipClass = result.coinResult === 'heads' ? 'flip-heads' : 'flip-tails';
     coin.classList.remove('flip-heads', 'flip-tails');
+    coin.style.transform = 'rotateY(0deg)';
     setTimeout(() => {
         coin.classList.add(flipClass);
     }, 100);

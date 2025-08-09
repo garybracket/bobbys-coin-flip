@@ -161,7 +161,10 @@ async function flipCoin(prediction) {
             const coin = document.getElementById('coin');
             const flipClass = result.result === 'heads' ? 'flip-heads' : 'flip-tails';
             
+            // Reset coin to neutral state
             coin.classList.remove('flip-heads', 'flip-tails');
+            coin.style.transform = 'rotateY(0deg)';
+            
             setTimeout(() => {
                 coin.classList.add(flipClass);
             }, 10);
