@@ -494,7 +494,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             currentMatch = data;
             currentMatch.yourScore = 0;
             currentMatch.opponentScore = 0;
-            currentMatch.rounds = new Array(data.totalRounds).fill().map((_, i) => ({ round: i + 1 }));
+            // Don't overwrite rounds - use the ones sent from server with caller info
             
             showSection('matchSection');
             updateMatchUI();

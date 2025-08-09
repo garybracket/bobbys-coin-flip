@@ -676,6 +676,7 @@ function startMatch(player1, player2, totalRounds, betAmount) {
       totalRounds,
       betAmount,
       currentRound: 1,
+      rounds: match.rounds,
       yourTurn: match.rounds[0].caller === player1.username
     };
     
@@ -685,6 +686,7 @@ function startMatch(player1, player2, totalRounds, betAmount) {
       totalRounds,
       betAmount,
       currentRound: 1,
+      rounds: match.rounds,
       yourTurn: match.rounds[0].caller === player2.username
     };
     
