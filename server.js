@@ -618,6 +618,16 @@ io.on('connection', (socket) => {
 function startMatch(player1, player2, totalRounds, betAmount) {
   const matchId = generateMatchId();
   
+  // Ensure player objects have usernames
+  if (!player1 || !player1.username) {
+    console.error('startMatch: player1 is missing username', player1);
+    return;
+  }
+  if (!player2 || !player2.username) {
+    console.error('startMatch: player2 is missing username', player2);
+    return;
+  }
+  
   const match = {
     matchId,
     player1,
@@ -634,9 +644,11 @@ function startMatch(player1, player2, totalRounds, betAmount) {
   
   // Initialize rounds
   for (let i = 1; i <= totalRounds; i++) {
+    const caller = i % 2 === 1 ? player1.username : player2.username;
+    console.log(`Round ${i} caller: ${caller}`);
     match.rounds.push({
       round: i,
-      caller: i % 2 === 1 ? player1.username : player2.username, // Alternate caller
+      caller: caller, // Alternate caller
       callerPrediction: null,
       opponentPrediction: null,
       result: null,
