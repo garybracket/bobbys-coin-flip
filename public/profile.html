@@ -1,90 +1,225 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bobby's Coin Flip - Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'orbitron': ['Orbitron', 'monospace'],
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <div class="container">
-        <header class="header">
-            <h1 class="logo">🪙 Bobby's Coin Flip</h1>
-            <nav class="nav">
-                <a href="/game" class="nav-link">Play Game</a>
-                <a href="/leaderboard" class="nav-link">Leaderboard</a>
-                <button onclick="logout()" class="btn btn-secondary">Logout</button>
-            </nav>
+<body class="bg-gradient-dark min-h-screen text-white font-inter">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="glass backdrop-blur-lg border-b border-slate-700/50 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-3xl animate-float">🪙</div>
+                        <h1 class="text-xl md:text-2xl font-orbitron font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                            Bobby's Coin Flip
+                        </h1>
+                    </div>
+                    <nav class="flex items-center space-x-2 md:space-x-4">
+                        <a href="/game" class="px-3 py-2 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 transition-all duration-300 hover:scale-105 border border-green-600/30 text-sm font-medium">
+                            🎮 Play Game
+                        </a>
+                        <a href="/leaderboard" class="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 transition-all duration-300 hover:scale-105 border border-slate-600/30 text-sm">
+                            🏆 Leaderboard
+                        </a>
+                        <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 transition-all duration-300 border border-red-600/30 text-sm">
+                            Logout
+                        </button>
+                    </nav>
+                </div>
+            </div>
         </header>
 
-        <main class="main">
-            <!-- Ad Space Top -->
-            <div class="ad-space ad-top">
-                <p>Advertisement Space</p>
-            </div>
-
-            <div class="profile-container">
-                <div class="profile-header">
-                    <h2>Player Profile</h2>
-                    <div class="username" id="username">Loading...</div>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalCoins">0</div>
-                        <div class="stat-label">Total Coins</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="gamesPlayed">0</div>
-                        <div class="stat-label">Games Played</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="gamesWon">0</div>
-                        <div class="stat-label">Games Won</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="winRate">0%</div>
-                        <div class="stat-label">Win Rate</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="currentStreak">0</div>
-                        <div class="stat-label">Current Streak</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="bestStreak">0</div>
-                        <div class="stat-label">Best Streak</div>
+        <main class="flex-1 p-4 md:p-6">
+            <div class="max-w-6xl mx-auto space-y-8">
+                <!-- Ad Space Top -->
+                <div class="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6 text-center text-slate-400 backdrop-blur-sm">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span>📢</span>
+                        <span>Premium Advertisement Space</span>
                     </div>
                 </div>
 
-                <div class="history-section">
-                    <h3>Recent Game History</h3>
-                    <div class="history-container" id="historyContainer">
-                        <p>Loading game history...</p>
+                <!-- Profile Header -->
+                <div class="bg-gradient-card backdrop-blur-xl rounded-2xl p-8 border border-slate-700/30 shadow-2xl">
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-24 h-24 mb-6 rounded-full bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 shadow-2xl">
+                            <span class="text-3xl">👤</span>
+                        </div>
+                        <h2 class="text-3xl font-orbitron font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                            Player Profile
+                        </h2>
+                        <div class="text-2xl font-bold text-yellow-400 mb-4" id="username">Loading...</div>
+                        <div class="inline-flex px-4 py-2 rounded-full bg-blue-600/20 border border-blue-600/30">
+                            <span class="text-blue-400">🎮 Active Player</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="actions">
-                    <a href="/game" class="btn btn-primary">Play More Games</a>
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <!-- Stats Grid -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Main Stats -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl hover-lift">
+                                <div class="text-center">
+                                    <div class="text-3xl mb-2">💰</div>
+                                    <div class="text-3xl font-orbitron font-bold text-yellow-400 mb-1" id="totalCoins">0</div>
+                                    <div class="text-sm text-slate-400">Total Coins</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl hover-lift">
+                                <div class="text-center">
+                                    <div class="text-3xl mb-2">🎯</div>
+                                    <div class="text-3xl font-orbitron font-bold text-blue-400 mb-1" id="gamesPlayed">0</div>
+                                    <div class="text-sm text-slate-400">Games Played</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl hover-lift">
+                                <div class="text-center">
+                                    <div class="text-3xl mb-2">✅</div>
+                                    <div class="text-3xl font-orbitron font-bold text-green-400 mb-1" id="gamesWon">0</div>
+                                    <div class="text-sm text-slate-400">Games Won</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl hover-lift">
+                                <div class="text-center">
+                                    <div class="text-3xl mb-2">📊</div>
+                                    <div class="text-3xl font-orbitron font-bold text-purple-400 mb-1" id="winRate">0%</div>
+                                    <div class="text-sm text-slate-400">Win Rate</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl hover-lift">
+                                <div class="text-center">
+                                    <div class="text-3xl mb-2">🔥</div>
+                                    <div class="text-3xl font-orbitron font-bold text-orange-400 mb-1" id="currentStreak">0</div>
+                                    <div class="text-sm text-slate-400">Current Streak</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl hover-lift">
+                                <div class="text-center">
+                                    <div class="text-3xl mb-2">🏆</div>
+                                    <div class="text-3xl font-orbitron font-bold text-red-400 mb-1" id="bestStreak">0</div>
+                                    <div class="text-sm text-slate-400">Best Streak</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Game History -->
+                        <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-bold text-slate-200">📊 Recent Game History</h3>
+                                <div class="px-3 py-1 rounded-full bg-blue-600/20 border border-blue-600/30 text-blue-400 text-sm">
+                                    Last 50 Games
+                                </div>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto custom-scrollbar" id="historyContainer">
+                                <div class="text-center text-slate-400 py-8">
+                                    <div class="text-4xl mb-2">⏳</div>
+                                    <p>Loading game history...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="space-y-6">
+                        <!-- Quick Actions -->
+                        <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl">
+                            <h3 class="text-lg font-bold mb-4 text-center text-slate-200">⚡ Quick Actions</h3>
+                            <div class="space-y-3">
+                                <a href="/game" class="flex items-center justify-center w-full py-3 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium hover:scale-105 transition-all duration-200 shadow-lg">
+                                    <span class="mr-2">🎮</span>
+                                    Play More Games
+                                </a>
+                                <a href="/leaderboard" class="flex items-center justify-center w-full py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-orange-600 text-white font-medium hover:scale-105 transition-all duration-200 shadow-lg">
+                                    <span class="mr-2">🏆</span>
+                                    View Leaderboard
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Achievement Hints -->
+                        <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl">
+                            <h3 class="text-lg font-bold mb-4 text-center text-slate-200">🎯 Tips & Goals</h3>
+                            <div class="space-y-3 text-sm text-slate-300">
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-yellow-400 mt-1">•</span>
+                                    <span>Reach 1,000 coins to join the elite!</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-yellow-400 mt-1">•</span>
+                                    <span>Build a 10+ win streak for glory</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-yellow-400 mt-1">•</span>
+                                    <span>Climb to top 3 on leaderboard</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-yellow-400 mt-1">•</span>
+                                    <span>Play 100+ games for experience</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ad Space -->
+                        <div class="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6 text-center text-slate-400 backdrop-blur-sm">
+                            <div class="flex flex-col items-center space-y-2">
+                                <span class="text-2xl">💎</span>
+                                <span class="text-sm">Premium Ad Space</span>
+                                <span class="text-xs">Boost Your Game</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Ad Space Side -->
-            <div class="ad-space ad-side">
-                <p>Advertisement Space</p>
-            </div>
-
-            <!-- Ad Space Bottom -->
-            <div class="ad-space ad-bottom">
-                <p>Advertisement Space</p>
+                <!-- Bottom Ad Space -->
+                <div class="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6 text-center text-slate-400 backdrop-blur-sm">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span>🚀</span>
+                        <span>Advertisement Space - Level Up Your Experience</span>
+                    </div>
+                </div>
             </div>
         </main>
 
-        <footer class="footer">
-            <p>&copy; 2024 Bobby's Coin Flip. All rights reserved.</p>
+        <!-- Footer -->
+        <footer class="glass border-t border-slate-700/50 py-4">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <p class="text-slate-400 text-sm">
+                    &copy; 2024 Bobby's Coin Flip. 
+                    <span class="mx-2">|</span>
+                    <span class="text-yellow-400">Keep flipping, keep winning!</span>
+                </p>
+            </div>
         </footer>
     </div>
 
-    <div id="message" class="message"></div>
+    <!-- Message Container -->
+    <div id="message" class="fixed top-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium shadow-xl"></div>
+
     <script src="js/profile.js"></script>
 </body>
 </html>

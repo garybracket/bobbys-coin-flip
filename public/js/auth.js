@@ -3,7 +3,12 @@
 function showMessage(text, type = 'info') {
     const messageEl = document.getElementById('message');
     messageEl.textContent = text;
-    messageEl.className = `message ${type}`;
+    
+    let bgColor = 'bg-blue-600';
+    if (type === 'success') bgColor = 'bg-green-600';
+    else if (type === 'error') bgColor = 'bg-red-600';
+    
+    messageEl.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium shadow-xl ${bgColor}`;
     messageEl.classList.add('show');
     
     setTimeout(() => {
@@ -14,15 +19,19 @@ function showMessage(text, type = 'info') {
 function showLogin() {
     document.getElementById('loginForm').classList.remove('hidden');
     document.getElementById('registerForm').classList.add('hidden');
-    document.querySelectorAll('.tab-btn')[0].classList.add('active');
-    document.querySelectorAll('.tab-btn')[1].classList.remove('active');
+    
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs[0].className = 'tab-btn flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 bg-blue-600 text-white';
+    tabs[1].className = 'tab-btn flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white';
 }
 
 function showRegister() {
     document.getElementById('loginForm').classList.add('hidden');
     document.getElementById('registerForm').classList.remove('hidden');
-    document.querySelectorAll('.tab-btn')[0].classList.remove('active');
-    document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs[0].className = 'tab-btn flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 text-slate-400 hover:text-white';
+    tabs[1].className = 'tab-btn flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 bg-blue-600 text-white';
 }
 
 async function handleLogin(event) {

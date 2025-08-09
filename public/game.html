@@ -1,107 +1,229 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bobby's Coin Flip - Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'orbitron': ['Orbitron', 'monospace'],
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <header class="header">
-            <h1 class="logo">🪙 Bobby's Coin Flip</h1>
-            <nav class="nav">
-                <a href="/profile" class="nav-link">Profile</a>
-                <a href="/leaderboard" class="nav-link">Leaderboard</a>
-                <button onclick="logout()" class="btn btn-secondary">Logout</button>
-            </nav>
+<body class="bg-gradient-dark min-h-screen text-white font-inter">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="glass backdrop-blur-lg border-b border-slate-700/50 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-3xl animate-float">🪙</div>
+                        <h1 class="text-xl md:text-2xl font-orbitron font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                            Bobby's Coin Flip
+                        </h1>
+                    </div>
+                    <nav class="flex items-center space-x-2 md:space-x-4">
+                        <a href="/profile" class="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 transition-all duration-300 hover:scale-105 border border-slate-600/30 text-sm">
+                            👤 Profile
+                        </a>
+                        <a href="/leaderboard" class="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 transition-all duration-300 hover:scale-105 border border-slate-600/30 text-sm">
+                            🏆 Leaderboard
+                        </a>
+                        <button onclick="logout()" class="px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 transition-all duration-300 border border-red-600/30 text-sm">
+                            Logout
+                        </button>
+                    </nav>
+                </div>
+            </div>
         </header>
 
-        <main class="main">
-            <!-- Ad Space Top -->
-            <div class="ad-space ad-top">
-                <p>Advertisement Space</p>
-            </div>
-
-            <div class="game-container">
-                <div class="user-info">
-                    <div class="balance">
-                        <span class="balance-label">Balance:</span>
-                        <span class="balance-amount" id="balance">0</span> coins
-                    </div>
-                    <div class="streak">
-                        <span class="streak-label">Win Streak:</span>
-                        <span class="streak-amount" id="streak">0</span>
+        <main class="flex-1 flex flex-col lg:flex-row gap-6 p-4 md:p-6">
+            <!-- Sidebar -->
+            <aside class="lg:w-80 space-y-4">
+                <!-- Ad Space -->
+                <div class="bg-slate-800/30 border border-slate-700/50 rounded-lg p-4 text-center text-slate-400 backdrop-blur-sm">
+                    <div class="flex items-center justify-center space-x-2 text-sm">
+                        <span>📢</span>
+                        <span>Ad Space</span>
                     </div>
                 </div>
 
-                <div class="coin-container">
-                    <div class="coin" id="coin">
-                        <div class="coin-face coin-heads">H</div>
-                        <div class="coin-face coin-tails">T</div>
-                    </div>
-                </div>
-
-                <div class="game-controls">
-                    <div class="bet-section">
-                        <label for="betAmount">Bet Amount:</label>
-                        <input type="number" id="betAmount" min="1" value="10" max="0">
-                        <div class="quick-bet">
-                            <button onclick="setBet(10)" class="btn btn-small">10</button>
-                            <button onclick="setBet(25)" class="btn btn-small">25</button>
-                            <button onclick="setBet(50)" class="btn btn-small">50</button>
-                            <button onclick="setBet('all')" class="btn btn-small">All In</button>
+                <!-- User Stats -->
+                <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl">
+                    <h3 class="text-lg font-orbitron font-bold mb-4 text-center bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                        Player Stats
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg border border-slate-700/30">
+                            <span class="text-slate-300">💰 Balance:</span>
+                            <span class="font-bold text-yellow-400 text-lg" id="balance">0</span>
                         </div>
-                    </div>
-
-                    <div class="prediction-section">
-                        <h3>Make Your Prediction:</h3>
-                        <div class="prediction-buttons">
-                            <button onclick="flipCoin('heads')" class="btn btn-heads" id="headsBtn">
-                                Heads
-                            </button>
-                            <button onclick="flipCoin('tails')" class="btn btn-tails" id="tailsBtn">
-                                Tails
-                            </button>
+                        <div class="flex justify-between items-center p-3 bg-slate-800/30 rounded-lg border border-slate-700/30">
+                            <span class="text-slate-300">🔥 Win Streak:</span>
+                            <span class="font-bold text-orange-400 text-lg" id="streak">0</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="result-section" id="resultSection">
+                <!-- Game Rules -->
+                <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl">
+                    <h3 class="text-lg font-bold mb-4 text-center text-blue-400">🎮 How to Play</h3>
+                    <ul class="space-y-2 text-sm text-slate-300">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-yellow-400 mt-1">•</span>
+                            <span>Choose your bet amount</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-yellow-400 mt-1">•</span>
+                            <span>Predict Heads or Tails</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-yellow-400 mt-1">•</span>
+                            <span>Correct = double your bet!</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-yellow-400 mt-1">•</span>
+                            <span>Wrong = lose your bet</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-yellow-400 mt-1">•</span>
+                            <span>Build streaks for glory!</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Ad Space -->
+                <div class="bg-slate-800/30 border border-slate-700/50 rounded-lg p-4 text-center text-slate-400 backdrop-blur-sm">
+                    <div class="flex items-center justify-center space-x-2 text-sm">
+                        <span>💎</span>
+                        <span>Premium Ad Space</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Game Area -->
+            <div class="flex-1 space-y-6">
+                <!-- Coin Container -->
+                <div class="bg-gradient-card backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-slate-700/30 shadow-2xl">
+                    <div class="text-center">
+                        <div class="flex justify-center mb-8">
+                            <div class="coin w-40 h-40 md:w-48 md:h-48" id="coin">
+                                <div class="coin-face coin-heads w-full h-full rounded-full flex items-center justify-center text-6xl md:text-7xl font-orbitron font-black">
+                                    H
+                                </div>
+                                <div class="coin-face coin-tails w-full h-full rounded-full flex items-center justify-center text-6xl md:text-7xl font-orbitron font-black absolute top-0 left-0">
+                                    T
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Betting Controls -->
+                        <div class="space-y-6">
+                            <!-- Bet Amount -->
+                            <div class="max-w-md mx-auto">
+                                <label for="betAmount" class="block text-lg font-bold mb-3 text-center text-slate-200">
+                                    💎 Bet Amount
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="betAmount" min="1" value="10" max="0" 
+                                           class="w-full px-4 py-3 text-center text-xl font-bold rounded-xl bg-slate-800/50 border border-slate-600/50 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200">
+                                    <div class="absolute right-3 top-3 text-yellow-400 font-bold">💰</div>
+                                </div>
+                                
+                                <!-- Quick Bet Buttons -->
+                                <div class="flex flex-wrap gap-2 mt-4 justify-center">
+                                    <button onclick="setBet(10)" class="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-sm font-medium transition-all duration-200 hover:scale-105">
+                                        10
+                                    </button>
+                                    <button onclick="setBet(25)" class="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-sm font-medium transition-all duration-200 hover:scale-105">
+                                        25
+                                    </button>
+                                    <button onclick="setBet(50)" class="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-sm font-medium transition-all duration-200 hover:scale-105">
+                                        50
+                                    </button>
+                                    <button onclick="setBet(100)" class="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-sm font-medium transition-all duration-200 hover:scale-105">
+                                        100
+                                    </button>
+                                    <button onclick="setBet('all')" class="px-3 py-2 rounded-lg btn-gold text-sm font-medium transition-all duration-200 hover:scale-105">
+                                        All In
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Prediction Buttons -->
+                            <div>
+                                <h3 class="text-xl font-bold mb-4 text-center text-slate-200">🎯 Make Your Prediction</h3>
+                                <div class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+                                    <button onclick="flipCoin('heads')" id="headsBtn" 
+                                            class="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-lg hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                                        <div class="flex items-center justify-center space-x-2">
+                                            <span class="text-2xl">🪙</span>
+                                            <span>HEADS</span>
+                                        </div>
+                                    </button>
+                                    <button onclick="flipCoin('tails')" id="tailsBtn" 
+                                            class="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold text-lg hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                                        <div class="flex items-center justify-center space-x-2">
+                                            <span class="text-2xl">🪙</span>
+                                            <span>TAILS</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="min-h-24" id="resultSection">
                     <!-- Results will be displayed here -->
                 </div>
-            </div>
 
-            <!-- Game Rules -->
-            <div class="rules-section">
-                <h3>Game Rules</h3>
-                <ul>
-                    <li>Choose your bet amount (minimum 1 coin)</li>
-                    <li>Predict if the coin will land on Heads or Tails</li>
-                    <li>If you guess correctly, you double your bet!</li>
-                    <li>If you guess wrong, you lose your bet</li>
-                    <li>Build win streaks to climb the leaderboard!</li>
-                    <li>Start with 100 coins - don't lose them all!</li>
-                </ul>
-            </div>
-
-            <!-- Ad Space Side -->
-            <div class="ad-space ad-side">
-                <p>Advertisement Space</p>
-            </div>
-
-            <!-- Ad Space Bottom -->
-            <div class="ad-space ad-bottom">
-                <p>Advertisement Space</p>
+                <!-- Bottom Ad Space -->
+                <div class="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6 text-center text-slate-400 backdrop-blur-sm">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span>🚀</span>
+                        <span>Advertisement Space - Boost Your Game</span>
+                    </div>
+                </div>
             </div>
         </main>
 
-        <footer class="footer">
-            <p>&copy; 2024 Bobby's Coin Flip. All rights reserved.</p>
+        <!-- Footer -->
+        <footer class="glass border-t border-slate-700/50 py-4">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <p class="text-slate-400 text-sm">
+                    &copy; 2024 Bobby's Coin Flip. 
+                    <span class="mx-2">|</span>
+                    <span class="text-yellow-400">May the odds be in your favor!</span>
+                </p>
+            </div>
         </footer>
     </div>
 
-    <div id="message" class="message"></div>
+    <!-- Message Container -->
+    <div id="message" class="fixed top-4 right-4 z-50 px-6 py-4 rounded-lg text-white font-medium shadow-xl"></div>
+
     <script src="js/game.js"></script>
 </body>
 </html>

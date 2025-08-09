@@ -1,72 +1,215 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bobby's Coin Flip - Leaderboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'orbitron': ['Orbitron', 'monospace'],
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <div class="container">
-        <header class="header">
-            <h1 class="logo">🪙 Bobby's Coin Flip</h1>
-            <nav class="nav">
-                <a href="/" class="nav-link">Home</a>
-                <a href="/game" class="nav-link">Play Game</a>
-                <a href="/profile" class="nav-link">Profile</a>
-            </nav>
+<body class="bg-gradient-dark min-h-screen text-white font-inter">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="glass backdrop-blur-lg border-b border-slate-700/50 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-3xl animate-float">🪙</div>
+                        <h1 class="text-xl md:text-2xl font-orbitron font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                            Bobby's Coin Flip
+                        </h1>
+                    </div>
+                    <nav class="flex items-center space-x-2 md:space-x-4">
+                        <a href="/" class="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 transition-all duration-300 hover:scale-105 border border-slate-600/30 text-sm">
+                            🏠 Home
+                        </a>
+                        <a href="/game" class="px-3 py-2 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 transition-all duration-300 hover:scale-105 border border-green-600/30 text-sm font-medium">
+                            🎮 Play Game
+                        </a>
+                        <a href="/profile" class="px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 transition-all duration-300 hover:scale-105 border border-slate-600/30 text-sm">
+                            👤 Profile
+                        </a>
+                    </nav>
+                </div>
+            </div>
         </header>
 
-        <main class="main">
-            <!-- Ad Space Top -->
-            <div class="ad-space ad-top">
-                <p>Advertisement Space</p>
-            </div>
-
-            <div class="leaderboard-container">
-                <div class="leaderboard-header">
-                    <h2>🏆 Top Players</h2>
-                    <p>Ranked by total coins earned</p>
-                </div>
-
-                <div class="leaderboard-table">
-                    <div class="table-header">
-                        <div class="rank-col">Rank</div>
-                        <div class="username-col">Player</div>
-                        <div class="coins-col">Coins</div>
-                        <div class="games-col">Games</div>
-                        <div class="winrate-col">Win Rate</div>
-                        <div class="streak-col">Best Streak</div>
-                    </div>
-                    <div class="table-body" id="leaderboardBody">
-                        <div class="loading">Loading leaderboard...</div>
+        <main class="flex-1 p-4 md:p-6">
+            <div class="max-w-6xl mx-auto space-y-8">
+                <!-- Ad Space Top -->
+                <div class="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6 text-center text-slate-400 backdrop-blur-sm">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span>📢</span>
+                        <span>Premium Advertisement Space</span>
                     </div>
                 </div>
 
-                <div class="leaderboard-info">
-                    <h3>How to Climb the Leaderboard</h3>
-                    <ul>
-                        <li>Win coin flips to increase your total coins</li>
-                        <li>Build long win streaks for bonus recognition</li>
-                        <li>Play regularly to maintain your position</li>
-                        <li>Start with smart betting strategies</li>
-                    </ul>
+                <!-- Leaderboard Header -->
+                <div class="bg-gradient-card backdrop-blur-xl rounded-2xl p-8 border border-slate-700/30 shadow-2xl text-center">
+                    <div class="flex justify-center mb-6">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 shadow-2xl">
+                            <span class="text-3xl">🏆</span>
+                        </div>
+                    </div>
+                    <h2 class="text-3xl md:text-4xl font-orbitron font-black mb-4 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
+                        Champions Leaderboard
+                    </h2>
+                    <p class="text-slate-300 text-lg">
+                        Ranked by total coins earned • Updated in real-time
+                    </p>
                 </div>
-            </div>
 
-            <!-- Ad Space Side -->
-            <div class="ad-space ad-side">
-                <p>Advertisement Space</p>
-            </div>
+                <div class="grid lg:grid-cols-4 gap-8">
+                    <!-- Main Leaderboard -->
+                    <div class="lg:col-span-3">
+                        <!-- Top 3 Podium -->
+                        <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl mb-8">
+                            <h3 class="text-xl font-bold mb-6 text-center text-slate-200">🥇 Top 3 Champions</h3>
+                            <div class="grid md:grid-cols-3 gap-4" id="podium">
+                                <!-- Podium positions will be populated by JavaScript -->
+                                <div class="text-center text-slate-400 py-8">
+                                    <div class="text-4xl mb-2">⏳</div>
+                                    <p>Loading champions...</p>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- Ad Space Bottom -->
-            <div class="ad-space ad-bottom">
-                <p>Advertisement Space</p>
+                        <!-- Full Leaderboard Table -->
+                        <div class="bg-gradient-card backdrop-blur-xl rounded-xl border border-slate-700/30 shadow-xl overflow-hidden">
+                            <div class="p-6 border-b border-slate-700/30">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-xl font-bold text-slate-200">📊 Full Rankings</h3>
+                                    <div class="flex items-center space-x-2 text-sm text-slate-400">
+                                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                        <span>Live Updates</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Table Header (Desktop) -->
+                            <div class="hidden md:grid grid-cols-6 gap-4 p-4 bg-slate-800/30 border-b border-slate-700/30 text-sm font-medium text-slate-400">
+                                <div>Rank</div>
+                                <div>Player</div>
+                                <div class="text-center">Coins</div>
+                                <div class="text-center">Games</div>
+                                <div class="text-center">Win Rate</div>
+                                <div class="text-center">Best Streak</div>
+                            </div>
+
+                            <!-- Leaderboard Body -->
+                            <div class="divide-y divide-slate-700/30" id="leaderboardBody">
+                                <div class="text-center text-slate-400 py-8">
+                                    <div class="inline-flex items-center space-x-2">
+                                        <div class="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Loading leaderboard...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="space-y-6">
+                        <!-- Competition Info -->
+                        <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl">
+                            <h3 class="text-lg font-bold mb-4 text-center text-slate-200">🎯 How to Climb</h3>
+                            <div class="space-y-3 text-sm text-slate-300">
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-yellow-400 mt-1">•</span>
+                                    <span>Win coin flips to increase your total</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-yellow-400 mt-1">•</span>
+                                    <span>Build long win streaks</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-yellow-400 mt-1">•</span>
+                                    <span>Play consistently to maintain position</span>
+                                </div>
+                                <div class="flex items-start space-x-2">
+                                    <span class="text-yellow-400 mt-1">•</span>
+                                    <span>Smart betting leads to success</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Stats -->
+                        <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl">
+                            <h3 class="text-lg font-bold mb-4 text-center text-slate-200">📈 Leaderboard Stats</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-300">Total Players:</span>
+                                    <span class="font-bold text-blue-400" id="totalPlayers">-</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-300">Top Coin Count:</span>
+                                    <span class="font-bold text-yellow-400" id="topCoins">-</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-300">Best Win Rate:</span>
+                                    <span class="font-bold text-green-400" id="bestWinRate">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Join Game CTA -->
+                        <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-6 border border-slate-700/30 shadow-xl">
+                            <h3 class="text-lg font-bold mb-4 text-center text-slate-200">⚡ Ready to Compete?</h3>
+                            <div class="space-y-3">
+                                <a href="/game" class="flex items-center justify-center w-full py-3 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium hover:scale-105 transition-all duration-200 shadow-lg">
+                                    <span class="mr-2">🎮</span>
+                                    Start Playing
+                                </a>
+                                <a href="/" class="flex items-center justify-center w-full py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 font-medium transition-all duration-200">
+                                    <span class="mr-2">🏠</span>
+                                    Create Account
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Ad Space -->
+                        <div class="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6 text-center text-slate-400 backdrop-blur-sm">
+                            <div class="flex flex-col items-center space-y-2">
+                                <span class="text-2xl">💎</span>
+                                <span class="text-sm">Premium Ad Space</span>
+                                <span class="text-xs">Compete & Win</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Ad Space -->
+                <div class="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6 text-center text-slate-400 backdrop-blur-sm">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span>🚀</span>
+                        <span>Advertisement Space - Join the Competition</span>
+                    </div>
+                </div>
             </div>
         </main>
 
-        <footer class="footer">
-            <p>&copy; 2024 Bobby's Coin Flip. All rights reserved.</p>
+        <!-- Footer -->
+        <footer class="glass border-t border-slate-700/50 py-4">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <p class="text-slate-400 text-sm">
+                    &copy; 2024 Bobby's Coin Flip. 
+                    <span class="mx-2">|</span>
+                    <span class="text-yellow-400">Rise to the top of the leaderboard!</span>
+                </p>
+            </div>
         </footer>
     </div>
 

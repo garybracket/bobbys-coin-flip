@@ -43,16 +43,31 @@ function updateUI() {
 function showResult(result, won, winAmount, newBalance) {
     const resultSection = document.getElementById('resultSection');
     
-    const resultClass = won ? 'result-win' : 'result-lose';
-    const resultEmoji = won ? '🎉' : '😢';
-    const resultText = won ? 'You Won!' : 'You Lost!';
+    const bgClass = won ? 'bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-500/30' : 'bg-gradient-to-r from-red-600/20 to-orange-600/20 border-red-500/30';
+    const textClass = won ? 'text-green-400' : 'text-red-400';
+    const resultEmoji = won ? '🎉' : '💸';
+    const resultText = won ? 'VICTORY!' : 'DEFEAT!';
     const amountText = won ? `+${winAmount}` : `${winAmount}`;
+    const amountColor = won ? 'text-green-400' : 'text-red-400';
     
     resultSection.innerHTML = `
-        <div class="${resultClass}">
-            <h3>${resultEmoji} ${resultText}</h3>
-            <p>The coin landed on: <strong>${result.toUpperCase()}</strong></p>
-            <p>Coins ${amountText} | New Balance: ${newBalance}</p>
+        <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-8 border ${bgClass} shadow-xl animate-pulse-glow">
+            <div class="text-center">
+                <div class="text-6xl mb-4 animate-bounce">${resultEmoji}</div>
+                <h3 class="text-3xl font-orbitron font-bold ${textClass} mb-4">${resultText}</h3>
+                <div class="space-y-3 text-lg">
+                    <p class="text-slate-200">
+                        The coin landed on: <span class="font-bold text-yellow-400">${result.toUpperCase()}</span>
+                    </p>
+                    <p class="text-slate-200">
+                        Coins <span class="font-bold ${amountColor}">${amountText}</span>
+                    </p>
+                    <p class="text-slate-200">
+                        New Balance: <span class="font-bold text-yellow-400">${newBalance}</span>
+                    </p>
+                </div>
+                ${won ? '<div class="mt-4 text-sm text-green-300">🔥 Keep the streak going!</div>' : '<div class="mt-4 text-sm text-slate-400">💪 Better luck next time!</div>'}
+            </div>
         </div>
     `;
     

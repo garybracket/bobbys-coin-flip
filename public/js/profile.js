@@ -44,28 +44,41 @@ function displayGameHistory(history) {
     const container = document.getElementById('historyContainer');
     
     if (!history || history.length === 0) {
-        container.innerHTML = '<p>No games played yet. <a href="/game">Start playing!</a></p>';
+        container.innerHTML = `
+            <div class="text-center text-slate-400 py-8">
+                <div class="text-4xl mb-2">🎮</div>
+                <p>No games played yet.</p>
+                <a href="/game" class="inline-flex items-center mt-2 text-blue-400 hover:text-blue-300">
+                    Start playing! →
+                </a>
+            </div>
+        `;
         return;
     }
     
     const historyHTML = history.map(game => {
-        const resultClass = game.won ? 'win' : 'lose';
-        const resultEmoji = game.won ? '✅' : '❌';
+        const bgClass = game.won ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20';
+        const resultEmoji = game.won ? '🎉' : '💸';
+        const resultText = game.won ? 'WON' : 'LOST';
+        const resultClass = game.won ? 'text-green-400' : 'text-red-400';
         const amountText = game.won ? `+${game.winAmount}` : `${game.winAmount}`;
-        const amountColor = game.won ? '#22543d' : '#742a2a';
+        const amountColor = game.won ? 'text-green-400' : 'text-red-400';
         
         return `
-            <div class="history-item ${resultClass}">
-                <div class="history-details">
-                    <div class="history-result ${resultClass}">
-                        ${resultEmoji} Predicted: ${game.prediction.toUpperCase()}, Result: ${game.result.toUpperCase()}
+            <div class="p-4 rounded-lg border ${bgClass} hover:bg-opacity-20 transition-all duration-200 mb-3">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg">${resultEmoji}</span>
+                        <span class="font-bold ${resultClass}">${resultText}</span>
                     </div>
-                    <div class="history-meta">
-                        Bet: ${game.bet} coins • ${formatDate(game.timestamp)}
-                    </div>
+                    <div class="font-bold ${amountColor}">${amountText} coins</div>
                 </div>
-                <div class="history-amount" style="color: ${amountColor}; font-weight: bold;">
-                    ${amountText} coins
+                <div class="text-sm text-slate-300 mb-1">
+                    Predicted: <span class="font-medium text-yellow-400">${game.prediction.toUpperCase()}</span> • 
+                    Result: <span class="font-medium text-yellow-400">${game.result.toUpperCase()}</span>
+                </div>
+                <div class="text-xs text-slate-400">
+                    Bet: ${game.bet} coins • ${formatDate(game.timestamp)}
                 </div>
             </div>
         `;
