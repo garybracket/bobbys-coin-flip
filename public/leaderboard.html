@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bobby's Coin Flip - Leaderboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">🪙 Bobby's Coin Flip</h1>
+            <nav class="nav">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/game" class="nav-link">Play Game</a>
+                <a href="/profile" class="nav-link">Profile</a>
+            </nav>
+        </header>
+
+        <main class="main">
+            <!-- Ad Space Top -->
+            <div class="ad-space ad-top">
+                <p>Advertisement Space</p>
+            </div>
+
+            <div class="leaderboard-container">
+                <div class="leaderboard-header">
+                    <h2>🏆 Top Players</h2>
+                    <p>Ranked by total coins earned</p>
+                </div>
+
+                <div class="leaderboard-table">
+                    <div class="table-header">
+                        <div class="rank-col">Rank</div>
+                        <div class="username-col">Player</div>
+                        <div class="coins-col">Coins</div>
+                        <div class="games-col">Games</div>
+                        <div class="winrate-col">Win Rate</div>
+                        <div class="streak-col">Best Streak</div>
+                    </div>
+                    <div class="table-body" id="leaderboardBody">
+                        <div class="loading">Loading leaderboard...</div>
+                    </div>
+                </div>
+
+                <div class="leaderboard-info">
+                    <h3>How to Climb the Leaderboard</h3>
+                    <ul>
+                        <li>Win coin flips to increase your total coins</li>
+                        <li>Build long win streaks for bonus recognition</li>
+                        <li>Play regularly to maintain your position</li>
+                        <li>Start with smart betting strategies</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Ad Space Side -->
+            <div class="ad-space ad-side">
+                <p>Advertisement Space</p>
+            </div>
+
+            <!-- Ad Space Bottom -->
+            <div class="ad-space ad-bottom">
+                <p>Advertisement Space</p>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 Bobby's Coin Flip. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="js/leaderboard.js"></script>
+</body>
+</html>

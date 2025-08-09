@@ -1,0 +1,22 @@
+{
+  "name": "bobbys-coin-flip",
+  "version": "1.0.0",
+  "description": "A browser-based coin flipping game with leaderboards",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["game", "coin", "flip", "gambling", "leaderboard"],
+  "author": "Gary Bracket",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}

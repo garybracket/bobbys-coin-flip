@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bobby's Coin Flip - Profile</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">🪙 Bobby's Coin Flip</h1>
+            <nav class="nav">
+                <a href="/game" class="nav-link">Play Game</a>
+                <a href="/leaderboard" class="nav-link">Leaderboard</a>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </nav>
+        </header>
+
+        <main class="main">
+            <!-- Ad Space Top -->
+            <div class="ad-space ad-top">
+                <p>Advertisement Space</p>
+            </div>
+
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h2>Player Profile</h2>
+                    <div class="username" id="username">Loading...</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalCoins">0</div>
+                        <div class="stat-label">Total Coins</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="gamesPlayed">0</div>
+                        <div class="stat-label">Games Played</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="gamesWon">0</div>
+                        <div class="stat-label">Games Won</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="winRate">0%</div>
+                        <div class="stat-label">Win Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="currentStreak">0</div>
+                        <div class="stat-label">Current Streak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="bestStreak">0</div>
+                        <div class="stat-label">Best Streak</div>
+                    </div>
+                </div>
+
+                <div class="history-section">
+                    <h3>Recent Game History</h3>
+                    <div class="history-container" id="historyContainer">
+                        <p>Loading game history...</p>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <a href="/game" class="btn btn-primary">Play More Games</a>
+                </div>
+            </div>
+
+            <!-- Ad Space Side -->
+            <div class="ad-space ad-side">
+                <p>Advertisement Space</p>
+            </div>
+
+            <!-- Ad Space Bottom -->
+            <div class="ad-space ad-bottom">
+                <p>Advertisement Space</p>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 Bobby's Coin Flip. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <div id="message" class="message"></div>
+    <script src="js/profile.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bobby's Coin Flip - Premium Coin Flipping Game</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">🪙 Bobby's Coin Flip</h1>
+            <nav class="nav">
+                <a href="/leaderboard" class="nav-link">Leaderboard</a>
+            </nav>
+        </header>
+
+        <main class="main">
+            <!-- Ad Space Top -->
+            <div class="ad-space ad-top">
+                <p>Advertisement Space</p>
+            </div>
+
+            <div class="hero">
+                <h2>Welcome to the Ultimate Coin Flipping Experience!</h2>
+                <p>Test your luck, climb the leaderboard, and become a coin flipping legend!</p>
+            </div>
+
+            <div class="auth-container" id="authContainer">
+                <div class="auth-tabs">
+                    <button class="tab-btn active" onclick="showLogin()">Login</button>
+                    <button class="tab-btn" onclick="showRegister()">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <div class="auth-form" id="loginForm">
+                    <h3>Login to Your Account</h3>
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label for="loginUsername">Username</label>
+                            <input type="text" id="loginUsername" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+
+                <!-- Register Form -->
+                <div class="auth-form hidden" id="registerForm">
+                    <h3>Create New Account</h3>
+                    <form onsubmit="handleRegister(event)">
+                        <div class="form-group">
+                            <label for="registerUsername">Username</label>
+                            <input type="text" id="registerUsername" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">Password</label>
+                            <input type="password" id="registerPassword" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create Account</button>
+                    </form>
+                    <p class="note">You'll start with 100 coins to begin your flipping journey!</p>
+                </div>
+            </div>
+
+            <!-- Ad Space Bottom -->
+            <div class="ad-space ad-bottom">
+                <p>Advertisement Space</p>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 Bobby's Coin Flip. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <div id="message" class="message"></div>
+    <script src="js/auth.js"></script>
+</body>
+</html>

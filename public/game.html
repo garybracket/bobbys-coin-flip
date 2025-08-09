@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bobby's Coin Flip - Game</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">🪙 Bobby's Coin Flip</h1>
+            <nav class="nav">
+                <a href="/profile" class="nav-link">Profile</a>
+                <a href="/leaderboard" class="nav-link">Leaderboard</a>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </nav>
+        </header>
+
+        <main class="main">
+            <!-- Ad Space Top -->
+            <div class="ad-space ad-top">
+                <p>Advertisement Space</p>
+            </div>
+
+            <div class="game-container">
+                <div class="user-info">
+                    <div class="balance">
+                        <span class="balance-label">Balance:</span>
+                        <span class="balance-amount" id="balance">0</span> coins
+                    </div>
+                    <div class="streak">
+                        <span class="streak-label">Win Streak:</span>
+                        <span class="streak-amount" id="streak">0</span>
+                    </div>
+                </div>
+
+                <div class="coin-container">
+                    <div class="coin" id="coin">
+                        <div class="coin-face coin-heads">H</div>
+                        <div class="coin-face coin-tails">T</div>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <div class="bet-section">
+                        <label for="betAmount">Bet Amount:</label>
+                        <input type="number" id="betAmount" min="1" value="10" max="0">
+                        <div class="quick-bet">
+                            <button onclick="setBet(10)" class="btn btn-small">10</button>
+                            <button onclick="setBet(25)" class="btn btn-small">25</button>
+                            <button onclick="setBet(50)" class="btn btn-small">50</button>
+                            <button onclick="setBet('all')" class="btn btn-small">All In</button>
+                        </div>
+                    </div>
+
+                    <div class="prediction-section">
+                        <h3>Make Your Prediction:</h3>
+                        <div class="prediction-buttons">
+                            <button onclick="flipCoin('heads')" class="btn btn-heads" id="headsBtn">
+                                Heads
+                            </button>
+                            <button onclick="flipCoin('tails')" class="btn btn-tails" id="tailsBtn">
+                                Tails
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-section" id="resultSection">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+
+            <!-- Game Rules -->
+            <div class="rules-section">
+                <h3>Game Rules</h3>
+                <ul>
+                    <li>Choose your bet amount (minimum 1 coin)</li>
+                    <li>Predict if the coin will land on Heads or Tails</li>
+                    <li>If you guess correctly, you double your bet!</li>
+                    <li>If you guess wrong, you lose your bet</li>
+                    <li>Build win streaks to climb the leaderboard!</li>
+                    <li>Start with 100 coins - don't lose them all!</li>
+                </ul>
+            </div>
+
+            <!-- Ad Space Side -->
+            <div class="ad-space ad-side">
+                <p>Advertisement Space</p>
+            </div>
+
+            <!-- Ad Space Bottom -->
+            <div class="ad-space ad-bottom">
+                <p>Advertisement Space</p>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 Bobby's Coin Flip. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <div id="message" class="message"></div>
+    <script src="js/game.js"></script>
+</body>
+</html>
