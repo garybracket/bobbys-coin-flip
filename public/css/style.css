@@ -44,6 +44,7 @@
 /* Ensure proper initial state and animation states */
 .coin {
     transform: rotateY(0deg);
+    position: relative;
 }
 
 .coin.flip-heads {

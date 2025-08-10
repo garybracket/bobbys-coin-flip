@@ -33,27 +33,47 @@ function setBet(amount) {
 }
 
 function updateUI() {
+    console.log('updateUI called, currentUser:', currentUser ? 'exists' : 'null');
     if (currentUser) {
-        document.getElementById('balance').textContent = currentUser.stats.totalCoins;
-        document.getElementById('streak').textContent = currentUser.stats.winStreak;
-        document.getElementById('betAmount').max = currentUser.stats.totalCoins;
+        const balanceEl = document.getElementById('balance');
+        const streakEl = document.getElementById('streak');
+        const betAmountEl = document.getElementById('betAmount');
+        
+        if (balanceEl) balanceEl.textContent = currentUser.stats.totalCoins;
+        if (streakEl) streakEl.textContent = currentUser.stats.winStreak;
+        if (betAmountEl) betAmountEl.max = currentUser.stats.totalCoins;
         
         // Update level and rank display
         if (currentUser.levelInfo && currentUser.rankInfo) {
-            document.getElementById('level').textContent = currentUser.levelInfo.currentLevel;
-            document.getElementById('rank').innerHTML = `${currentUser.rankInfo.emoji} ${currentUser.rankInfo.rank}`;
-            document.getElementById('rank').style.color = currentUser.rankInfo.color;
+            const levelEl = document.getElementById('level');
+            const rankEl = document.getElementById('rank');
+            const xpProgressEl = document.getElementById('xpProgress');
+            const xpBarEl = document.getElementById('xpBar');
+            
+            if (levelEl) levelEl.textContent = currentUser.levelInfo.currentLevel;
+            if (rankEl) {
+                rankEl.innerHTML = `${currentUser.rankInfo.emoji} ${currentUser.rankInfo.rank}`;
+                rankEl.style.color = currentUser.rankInfo.color;
+            }
             
             // Update XP progress bar
-            const xpProgress = Math.floor((currentUser.levelInfo.xpIntoLevel / currentUser.levelInfo.xpForLevel) * 100);
-            document.getElementById('xpProgress').textContent = `${currentUser.levelInfo.xpIntoLevel} / ${currentUser.levelInfo.xpForLevel}`;
-            document.getElementById('xpBar').style.width = `${xpProgress}%`;
+            if (xpProgressEl && xpBarEl) {
+                const xpProgress = Math.floor((currentUser.levelInfo.xpIntoLevel / currentUser.levelInfo.xpForLevel) * 100);
+                xpProgressEl.textContent = `${currentUser.levelInfo.xpIntoLevel} / ${currentUser.levelInfo.xpForLevel}`;
+                xpBarEl.style.width = `${xpProgress}%`;
+            }
         }
     }
 }
 
 function showResult(result, won, winAmount, newBalance, xpReward, levelInfo, rankInfo) {
+    console.log('showResult called with:', { result, won, winAmount, newBalance });
+    
     const resultSection = document.getElementById('resultSection');
+    if (!resultSection) {
+        console.error('Result section element not found!');
+        return;
+    }
     
     const bgClass = won ? 'bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-500/30' : 'bg-gradient-to-r from-red-600/20 to-orange-600/20 border-red-500/30';
     const textClass = won ? 'text-green-400' : 'text-red-400';
@@ -81,7 +101,7 @@ function showResult(result, won, winAmount, newBalance, xpReward, levelInfo, ran
         </p>
     ` : '';
     
-    resultSection.innerHTML = `
+    const resultHTML = `
         <div class="bg-gradient-card backdrop-blur-xl rounded-xl p-8 border ${bgClass} shadow-xl animate-pulse-glow">
             <div class="text-center">
                 <div class="text-6xl mb-4 animate-bounce">${resultEmoji}</div>
@@ -103,6 +123,9 @@ function showResult(result, won, winAmount, newBalance, xpReward, levelInfo, ran
             </div>
         </div>
     `;
+    
+    resultSection.innerHTML = resultHTML;
+    console.log('Result HTML set, content length:', resultHTML.length);
     
     // Update user stats and level info
     currentUser.stats.totalCoins = newBalance;
@@ -161,25 +184,56 @@ async function flipCoin(prediction) {
         console.log('API response:', result);
         
         if (result.success) {
+            console.log('Flip successful, animating coin...');
+            
             // Animate coin flip
             const coin = document.getElementById('coin');
+            if (!coin) {
+                console.error('Coin element not found!');
+                return;
+            }
+            
             const flipClass = result.result === 'heads' ? 'flip-heads' : 'flip-tails';
+            console.log('Adding flip class:', flipClass);
             
             // Reset coin to neutral state
             coin.classList.remove('flip-heads', 'flip-tails');
             coin.style.transform = 'rotateY(0deg)';
             
+            // Force reflow before adding animation class
+            void coin.offsetHeight;
+            
             setTimeout(() => {
                 coin.classList.add(flipClass);
-            }, 10);
+                console.log('Animation started');
+            }, 50);
             
-            // Show result after animation
-            setTimeout(() => {
+            // Show result after animation - with fallback
+            const showResultsAndReset = () => {
+                console.log('Showing results...');
                 showResult(result.result, result.won, result.winAmount, result.newBalance, result.xpReward || null, result.levelInfo || null, result.rankInfo || null);
                 isFlipping = false;
-                document.getElementById('headsBtn').disabled = false;
-                document.getElementById('tailsBtn').disabled = false;
-            }, 1000);
+                
+                // Re-enable buttons
+                const headsBtn = document.getElementById('headsBtn');
+                const tailsBtn = document.getElementById('tailsBtn');
+                if (headsBtn) headsBtn.disabled = false;
+                if (tailsBtn) tailsBtn.disabled = false;
+                
+                console.log('Flip complete, buttons re-enabled');
+            };
+            
+            // Primary timer for animation
+            const resultTimer = setTimeout(showResultsAndReset, 1500);
+            
+            // Fallback timer in case something goes wrong
+            setTimeout(() => {
+                if (isFlipping) {
+                    console.warn('Fallback triggered - showing results immediately');
+                    clearTimeout(resultTimer);
+                    showResultsAndReset();
+                }
+            }, 3000);
             
         } else {
             showMessage(result.message, 'error');
