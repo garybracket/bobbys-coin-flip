@@ -384,39 +384,61 @@ app.get('/api/history', (req, res) => {
 
 // Socket.IO multiplayer functionality
 io.on('connection', (socket) => {
-  const session = socket.request.session;
-  
-  if (!session.userId) {
-    socket.emit('error', 'Not authenticated');
+  try {
+    const session = socket.request.session;
+    
+    if (!session || !session.userId) {
+      console.error(`[${socket.id}] Connection failed: No session or userId`);
+      socket.emit('error', 'Not authenticated');
+      return;
+    }
+
+    const username = session.userId;
+    const user = users.get(username);
+    
+    if (!user) {
+      console.error(`[${socket.id}] Connection failed: User ${username} not found`);
+      socket.emit('error', 'User not found');
+      return;
+    }
+
+    // Add player to online players
+    const playerData = {
+      socketId: socket.id,
+      username: username,
+      status: 'online', // online, in_lobby, in_match
+      matchId: null,
+      roomCode: null
+    };
+    
+    onlinePlayers.set(socket.id, playerData);
+
+    console.log(`[MP-CONNECT] ${username} connected (${socket.id}), total online: ${onlinePlayers.size}`);
+    console.log(`[MP-STATE] Player data:`, playerData);
+    
+    socket.emit('connected', { username, stats: user.stats });
+  } catch (error) {
+    console.error(`[MP-CONNECTION] Error in connection handler:`, error);
+    socket.emit('error', 'Connection initialization failed');
     return;
   }
-
-  const username = session.userId;
-  const user = users.get(username);
-  
-  if (!user) {
-    socket.emit('error', 'User not found');
-    return;
-  }
-
-  // Add player to online players
-  onlinePlayers.set(socket.id, {
-    socketId: socket.id,
-    username: username,
-    status: 'online', // online, in_lobby, in_match
-    matchId: null,
-    roomCode: null
-  });
-
-  console.log(`${username} connected to multiplayer`);
-  socket.emit('connected', { username, stats: user.stats });
 
   // Join multiplayer lobby
   socket.on('join_lobby', () => {
-    const player = onlinePlayers.get(socket.id);
-    if (player) {
+    try {
+      console.log(`[MP-LOBBY] ${socket.id} attempting to join lobby`);
+      
+      const player = onlinePlayers.get(socket.id);
+      if (!player) {
+        console.error(`[MP-LOBBY] Player not found for socket ${socket.id}`);
+        socket.emit('error', 'Player data not found');
+        return;
+      }
+      
       player.status = 'in_lobby';
       socket.join('lobby');
+      
+      console.log(`[MP-LOBBY] ${player.username} joined lobby, status: ${player.status}`);
       
       // Send lobby info
       const lobbyPlayers = Array.from(onlinePlayers.values())
@@ -426,8 +448,14 @@ io.on('connection', (socket) => {
           status: p.status
         }));
       
+      console.log(`[MP-LOBBY] Current lobby players:`, lobbyPlayers.map(p => p.username));
+      
       socket.emit('lobby_joined', { players: lobbyPlayers });
       socket.to('lobby').emit('player_joined_lobby', { username: player.username });
+      
+    } catch (error) {
+      console.error(`[MP-LOBBY] Error in join_lobby:`, error);
+      socket.emit('error', 'Failed to join lobby');
     }
   });
 
@@ -539,50 +567,165 @@ io.on('connection', (socket) => {
 
   // Handle match actions
   socket.on('make_call', (data) => {
-    const { matchId, prediction } = data;
-    const match = activeMatches.get(matchId);
-    const player = onlinePlayers.get(socket.id);
-    
-    if (!match || !player) return;
-    
-    const isPlayer1 = match.player1.username === player.username;
-    const currentRound = match.rounds[match.currentRound - 1];
-    
-    // Validate: Must be the caller and haven't called yet
-    if (currentRound.caller === player.username && !currentRound.callerPrediction) {
+    try {
+      console.log(`[MP-CALL] ${socket.id} making call:`, data);
+      
+      const { matchId, prediction } = data;
+      
+      if (!matchId || !prediction) {
+        console.error(`[MP-CALL] Missing data - matchId: ${matchId}, prediction: ${prediction}`);
+        socket.emit('error', 'Invalid call data');
+        return;
+      }
+      
+      const match = activeMatches.get(matchId);
+      const player = onlinePlayers.get(socket.id);
+      
+      if (!match) {
+        console.error(`[MP-CALL] Match ${matchId} not found in activeMatches`);
+        console.log(`[MP-DEBUG] Active matches:`, Array.from(activeMatches.keys()));
+        socket.emit('error', 'Match not found');
+        return;
+      }
+      
+      if (!player) {
+        console.error(`[MP-CALL] Player not found for socket ${socket.id}`);
+        socket.emit('error', 'Player not found');
+        return;
+      }
+      
+      console.log(`[MP-CALL] Match state - Round ${match.currentRound}/${match.totalRounds}`);
+      console.log(`[MP-CALL] Player ${player.username} attempting call in match ${matchId}`);
+      
+      const isPlayer1 = match.player1.username === player.username;
+      const currentRound = match.rounds[match.currentRound - 1];
+      
+      if (!currentRound) {
+        console.error(`[MP-CALL] Current round not found - Round ${match.currentRound}, Rounds length: ${match.rounds.length}`);
+        socket.emit('error', 'Round data error');
+        return;
+      }
+      
+      console.log(`[MP-CALL] Round state:`, {
+        caller: currentRound.caller,
+        callerPrediction: currentRound.callerPrediction,
+        opponentPrediction: currentRound.opponentPrediction,
+        status: currentRound.status
+      });
+      
+      // Validate: Must be the caller and haven't called yet
+      if (currentRound.caller !== player.username) {
+        console.error(`[MP-CALL] ${player.username} is not the caller (caller is ${currentRound.caller})`);
+        socket.emit('error', 'Not your turn to call');
+        return;
+      }
+      
+      if (currentRound.callerPrediction) {
+        console.error(`[MP-CALL] ${player.username} already made a call: ${currentRound.callerPrediction}`);
+        socket.emit('error', 'You already made your call');
+        return;
+      }
+      
+      // Make the call
       currentRound.callerPrediction = prediction;
       currentRound.status = 'waiting_opponent';
       
-      console.log(`${player.username} called ${prediction} in round ${match.currentRound}`);
+      console.log(`[MP-CALL] ✅ ${player.username} successfully called ${prediction} in round ${match.currentRound}`);
       
       // Notify opponent to make their prediction
       const opponentSocket = isPlayer1 ? 
         io.sockets.sockets.get(match.player2.socketId) :
         io.sockets.sockets.get(match.player1.socketId);
       
+      const opponentName = isPlayer1 ? match.player2.username : match.player1.username;
+      
       if (opponentSocket) {
+        console.log(`[MP-CALL] Notifying opponent ${opponentName}`);
         opponentSocket.emit('opponent_called', { prediction });
+      } else {
+        console.error(`[MP-CALL] Opponent socket not found for ${opponentName}`);
       }
+      
+    } catch (error) {
+      console.error(`[MP-CALL] Error in make_call:`, error);
+      socket.emit('error', 'Failed to make call');
     }
   });
 
   socket.on('make_prediction', (data) => {
-    const { matchId, prediction } = data;
-    const match = activeMatches.get(matchId);
-    const player = onlinePlayers.get(socket.id);
-    
-    if (!match || !player) return;
-    
-    const currentRound = match.rounds[match.currentRound - 1];
-    
-    // Validate: Must NOT be the caller, caller must have called, and opponent hasn't predicted yet
-    if (currentRound.caller !== player.username && 
-        currentRound.callerPrediction && 
-        !currentRound.opponentPrediction) {
+    try {
+      console.log(`[MP-PREDICT] ${socket.id} making prediction:`, data);
       
+      const { matchId, prediction } = data;
+      
+      if (!matchId || !prediction) {
+        console.error(`[MP-PREDICT] Missing data - matchId: ${matchId}, prediction: ${prediction}`);
+        socket.emit('error', 'Invalid prediction data');
+        return;
+      }
+      
+      const match = activeMatches.get(matchId);
+      const player = onlinePlayers.get(socket.id);
+      
+      if (!match) {
+        console.error(`[MP-PREDICT] Match ${matchId} not found`);
+        socket.emit('error', 'Match not found');
+        return;
+      }
+      
+      if (!player) {
+        console.error(`[MP-PREDICT] Player not found for socket ${socket.id}`);
+        socket.emit('error', 'Player not found');
+        return;
+      }
+      
+      console.log(`[MP-PREDICT] Player ${player.username} attempting prediction in match ${matchId}, round ${match.currentRound}`);
+      
+      const currentRound = match.rounds[match.currentRound - 1];
+      
+      if (!currentRound) {
+        console.error(`[MP-PREDICT] Current round not found - Round ${match.currentRound}`);
+        socket.emit('error', 'Round data error');
+        return;
+      }
+      
+      console.log(`[MP-PREDICT] Round validation:`, {
+        caller: currentRound.caller,
+        playerName: player.username,
+        isPlayerCaller: currentRound.caller === player.username,
+        callerPrediction: currentRound.callerPrediction,
+        opponentPrediction: currentRound.opponentPrediction
+      });
+      
+      // Validate: Must NOT be the caller, caller must have called, and opponent hasn't predicted yet
+      if (currentRound.caller === player.username) {
+        console.error(`[MP-PREDICT] ${player.username} is the caller, cannot make prediction`);
+        socket.emit('error', 'Callers cannot make predictions');
+        return;
+      }
+      
+      if (!currentRound.callerPrediction) {
+        console.error(`[MP-PREDICT] Caller hasn't made their call yet`);
+        socket.emit('error', 'Waiting for caller to make their call');
+        return;
+      }
+      
+      if (currentRound.opponentPrediction) {
+        console.error(`[MP-PREDICT] ${player.username} already made prediction: ${currentRound.opponentPrediction}`);
+        socket.emit('error', 'You already made your prediction');
+        return;
+      }
+      
+      // Make the prediction
       currentRound.opponentPrediction = prediction;
-      console.log(`${player.username} predicted ${prediction} in round ${match.currentRound}`);
+      console.log(`[MP-PREDICT] ✅ ${player.username} successfully predicted ${prediction} in round ${match.currentRound}`);
+      console.log(`[MP-PREDICT] Executing round - Caller: ${currentRound.caller} called ${currentRound.callerPrediction}, Opponent: ${player.username} predicted ${prediction}`);
+      
       executeRound(match);
+      
+    } catch (error) {
+      console.error(`[MP-PREDICT] Error in make_prediction:`, error);
+      socket.emit('error', 'Failed to make prediction');
     }
   });
 
@@ -704,47 +847,90 @@ function startMatch(player1, player2, totalRounds, betAmount) {
 }
 
 function executeRound(match) {
-  const currentRound = match.rounds[match.currentRound - 1];
-  
-  // Flip the coin
-  const coinResult = Math.random() < 0.5 ? 'heads' : 'tails';
-  currentRound.result = coinResult;
-  currentRound.status = 'completed';
-  
-  // Determine winner
-  let roundWinner = null;
-  if (currentRound.callerPrediction === coinResult) {
-    roundWinner = currentRound.caller;
-  } else if (currentRound.opponentPrediction === coinResult) {
-    roundWinner = currentRound.caller === match.player1.username ? 
-      match.player2.username : match.player1.username;
+  try {
+    console.log(`[MP-EXECUTE] 🎯 Executing round ${match.currentRound} for match ${match.matchId}`);
+    
+    const currentRound = match.rounds[match.currentRound - 1];
+    
+    if (!currentRound) {
+      console.error(`[MP-EXECUTE] No current round found for round ${match.currentRound}`);
+      return;
+    }
+    
+    console.log(`[MP-EXECUTE] Round setup:`, {
+      caller: currentRound.caller,
+      callerPrediction: currentRound.callerPrediction,
+      opponentPrediction: currentRound.opponentPrediction,
+      currentStatus: currentRound.status
+    });
+    
+    // Flip the coin
+    const coinResult = Math.random() < 0.5 ? 'heads' : 'tails';
+    currentRound.result = coinResult;
+    currentRound.status = 'completed';
+    
+    console.log(`[MP-EXECUTE] 🪙 Coin result: ${coinResult.toUpperCase()}`);
+    
+    // Determine winner
+    let roundWinner = null;
+    if (currentRound.callerPrediction === coinResult) {
+      roundWinner = currentRound.caller;
+      console.log(`[MP-EXECUTE] 🎉 Caller ${currentRound.caller} wins! (called ${currentRound.callerPrediction})`);
+    } else if (currentRound.opponentPrediction === coinResult) {
+      roundWinner = currentRound.caller === match.player1.username ? 
+        match.player2.username : match.player1.username;
+      console.log(`[MP-EXECUTE] 🎉 Opponent ${roundWinner} wins! (predicted ${currentRound.opponentPrediction})`);
+    } else {
+      console.log(`[MP-EXECUTE] 🤝 No winner this round`);
+    }
+    
+    currentRound.winner = roundWinner;
+    
+    // Update scores
+    const oldP1Score = match.player1Score;
+    const oldP2Score = match.player2Score;
+    
+    if (roundWinner === match.player1.username) {
+      match.player1Score++;
+    } else if (roundWinner === match.player2.username) {
+      match.player2Score++;
+    }
+    
+    console.log(`[MP-EXECUTE] Score update: ${match.player1.username}: ${oldP1Score}→${match.player1Score}, ${match.player2.username}: ${oldP2Score}→${match.player2Score}`);
+    
+    // Notify both players of round result
+    const player1Socket = io.sockets.sockets.get(match.player1.socketId);
+    const player2Socket = io.sockets.sockets.get(match.player2.socketId);
+    
+    const roundResult = {
+      round: match.currentRound,
+      coinResult,
+      callerPrediction: currentRound.callerPrediction,
+      opponentPrediction: currentRound.opponentPrediction,
+      winner: roundWinner,
+      player1Score: match.player1Score,
+      player2Score: match.player2Score
+    };
+    
+    console.log(`[MP-EXECUTE] Sending round result:`, roundResult);
+    
+    if (player1Socket) {
+      player1Socket.emit('round_result', roundResult);
+      console.log(`[MP-EXECUTE] ✅ Sent result to ${match.player1.username}`);
+    } else {
+      console.error(`[MP-EXECUTE] ❌ Player1 socket not found for ${match.player1.username}`);
+    }
+    
+    if (player2Socket) {
+      player2Socket.emit('round_result', roundResult);
+      console.log(`[MP-EXECUTE] ✅ Sent result to ${match.player2.username}`);
+    } else {
+      console.error(`[MP-EXECUTE] ❌ Player2 socket not found for ${match.player2.username}`);
+    }
+  } catch (error) {
+    console.error(`[MP-EXECUTE] Error in executeRound:`, error);
+    return;
   }
-  
-  currentRound.winner = roundWinner;
-  
-  // Update scores
-  if (roundWinner === match.player1.username) {
-    match.player1Score++;
-  } else if (roundWinner === match.player2.username) {
-    match.player2Score++;
-  }
-  
-  // Notify both players of round result
-  const player1Socket = io.sockets.sockets.get(match.player1.socketId);
-  const player2Socket = io.sockets.sockets.get(match.player2.socketId);
-  
-  const roundResult = {
-    round: match.currentRound,
-    coinResult,
-    callerPrediction: currentRound.callerPrediction,
-    opponentPrediction: currentRound.opponentPrediction,
-    winner: roundWinner,
-    player1Score: match.player1Score,
-    player2Score: match.player2Score
-  };
-  
-  if (player1Socket) player1Socket.emit('round_result', roundResult);
-  if (player2Socket) player2Socket.emit('round_result', roundResult);
   
   // Check if match is over
   const majorityWins = Math.ceil(match.totalRounds / 2);

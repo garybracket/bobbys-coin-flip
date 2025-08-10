@@ -124,34 +124,95 @@ function cancelSearch() {
 }
 
 function makeCall(prediction) {
-    if (currentMatch && socket) {
-        socket.emit('make_call', {
+    try {
+        console.log(`[CLIENT-CALL] 🎯 Making call: ${prediction}`);
+        console.log(`[CLIENT-CALL] Current match state:`, {
+            hasMatch: !!currentMatch,
+            hasSocket: !!socket,
+            matchId: currentMatch?.matchId,
+            currentRound: currentMatch?.currentRound,
+            totalRounds: currentMatch?.totalRounds
+        });
+        
+        if (!currentMatch) {
+            console.error(`[CLIENT-CALL] ❌ No current match`);
+            showMessage('No active match found', 'error');
+            return;
+        }
+        
+        if (!socket) {
+            console.error(`[CLIENT-CALL] ❌ No socket connection`);
+            showMessage('Not connected to multiplayer server', 'error');
+            return;
+        }
+        
+        const callData = {
             matchId: currentMatch.matchId,
             prediction: prediction
-        });
+        };
+        
+        console.log(`[CLIENT-CALL] Sending call data:`, callData);
+        socket.emit('make_call', callData);
         
         // Disable all call buttons to prevent duplicate calls
         const callButtons = document.querySelectorAll('button[onclick^="makeCall"]');
-        callButtons.forEach(btn => btn.disabled = true);
+        callButtons.forEach(btn => {
+            btn.disabled = true;
+            console.log(`[CLIENT-CALL] Disabled button: ${btn.textContent}`);
+        });
         
-        // Update UI to show waiting for opponent
+        console.log(`[CLIENT-CALL] ✅ Call sent, updating UI`);
         updateMatchUI();
+        
+    } catch (error) {
+        console.error(`[CLIENT-CALL] Error making call:`, error);
+        showMessage('Failed to make call', 'error');
     }
 }
 
 function makePrediction(prediction) {
-    if (currentMatch && socket) {
-        socket.emit('make_prediction', {
+    try {
+        console.log(`[CLIENT-PREDICT] 🎯 Making prediction: ${prediction}`);
+        console.log(`[CLIENT-PREDICT] Current match state:`, {
+            hasMatch: !!currentMatch,
+            hasSocket: !!socket,
+            matchId: currentMatch?.matchId,
+            currentRound: currentMatch?.currentRound
+        });
+        
+        if (!currentMatch) {
+            console.error(`[CLIENT-PREDICT] ❌ No current match`);
+            showMessage('No active match found', 'error');
+            return;
+        }
+        
+        if (!socket) {
+            console.error(`[CLIENT-PREDICT] ❌ No socket connection`);
+            showMessage('Not connected to multiplayer server', 'error');
+            return;
+        }
+        
+        const predictionData = {
             matchId: currentMatch.matchId,
             prediction: prediction
-        });
+        };
+        
+        console.log(`[CLIENT-PREDICT] Sending prediction data:`, predictionData);
+        socket.emit('make_prediction', predictionData);
         
         // Disable all prediction buttons to prevent duplicate predictions
         const predictionButtons = document.querySelectorAll('button[onclick^="makePrediction"]');
-        predictionButtons.forEach(btn => btn.disabled = true);
+        predictionButtons.forEach(btn => {
+            btn.disabled = true;
+            console.log(`[CLIENT-PREDICT] Disabled prediction button: ${btn.textContent}`);
+        });
         
-        // Update UI to show waiting for result
+        console.log(`[CLIENT-PREDICT] ✅ Prediction sent, updating UI`);
         updateMatchUI();
+        
+    } catch (error) {
+        console.error(`[CLIENT-PREDICT] Error making prediction:`, error);
+        showMessage('Failed to make prediction', 'error');
     }
 }
 
@@ -452,16 +513,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         socket = io();
         
         socket.on('connect', () => {
+            console.log(`[CLIENT-SOCKET] ✅ Connected to multiplayer server`);
             updateConnectionStatus(true);
             showMessage('Connected to multiplayer!', 'success');
         });
         
         socket.on('disconnect', () => {
+            console.log(`[CLIENT-SOCKET] ❌ Disconnected from multiplayer server`);
             updateConnectionStatus(false);
             showMessage('Disconnected from multiplayer', 'error');
         });
         
         socket.on('error', (message) => {
+            console.error(`[CLIENT-SOCKET] Server error:`, message);
             showMessage(message, 'error');
         });
         
@@ -499,10 +563,25 @@ window.addEventListener('DOMContentLoaded', async () => {
         });
         
         socket.on('match_started', (data) => {
+            console.log(`[CLIENT-MATCH] 🎮 Match started!`, data);
+            
             currentMatch = data;
             currentMatch.yourScore = 0;
             currentMatch.opponentScore = 0;
             // Don't overwrite rounds - use the ones sent from server with caller info
+            
+            console.log(`[CLIENT-MATCH] Match setup:`, {
+                matchId: currentMatch.matchId,
+                opponent: currentMatch.opponent,
+                totalRounds: currentMatch.totalRounds,
+                currentRound: currentMatch.currentRound,
+                roundsLength: currentMatch.rounds?.length,
+                yourTurn: currentMatch.yourTurn
+            });
+            
+            if (currentMatch.rounds && currentMatch.rounds.length > 0) {
+                console.log(`[CLIENT-MATCH] Round 1 details:`, currentMatch.rounds[0]);
+            }
             
             showSection('matchSection');
             updateMatchUI();
@@ -515,6 +594,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         });
         
         socket.on('round_result', (result) => {
+            console.log(`[CLIENT-ROUND] 🎯 Round result received:`, result);
+            console.log(`[CLIENT-ROUND] Coin: ${result.coinResult}, Winner: ${result.winner || 'None'}, Score: ${result.player1Score}-${result.player2Score}`);
             showRoundResult(result);
         });
         
