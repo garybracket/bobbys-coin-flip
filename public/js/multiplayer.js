@@ -317,12 +317,8 @@ function updateMatchUI() {
             <!-- Coin Animation Area -->
             <div class="flex justify-center mb-8">
                 <div class="coin w-32 h-32 md:w-40 md:h-40" id="multiplayerCoin">
-                    <div class="coin-face coin-heads w-full h-full rounded-full flex items-center justify-center text-5xl md:text-6xl font-orbitron font-black">
-                        H
-                    </div>
-                    <div class="coin-face coin-tails w-full h-full rounded-full flex items-center justify-center text-5xl md:text-6xl font-orbitron font-black absolute top-0 left-0">
-                        T
-                    </div>
+                    <div class="coin-face coin-heads"></div>
+                    <div class="coin-face coin-tails"></div>
                 </div>
             </div>
 
@@ -346,10 +342,18 @@ function showRoundResult(result) {
     
     // Animate coin
     const flipClass = result.coinResult === 'heads' ? 'flip-heads' : 'flip-tails';
+    console.log(`[MP-COIN] Animating coin to ${result.coinResult}, class: ${flipClass}`);
+    
     coin.classList.remove('flip-heads', 'flip-tails');
     coin.style.transform = 'rotateY(0deg)';
+    console.log(`[MP-COIN] Coin reset to heads position`);
+    
+    // Force reflow before adding animation class
+    void coin.offsetHeight;
+    
     setTimeout(() => {
         coin.classList.add(flipClass);
+        console.log(`[MP-COIN] Animation started with class: ${flipClass}`);
     }, 100);
     
     // Show result after coin animation
