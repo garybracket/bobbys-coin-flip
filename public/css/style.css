@@ -79,11 +79,7 @@
     filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
 }
 
-/* Ensure proper initial state and animation states */
-.coin {
-    transform: rotateY(0deg);
-    position: relative;
-}
+/* Animation states for coin */
 
 .coin.flip-heads {
     animation: flipToHeads 1.2s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
