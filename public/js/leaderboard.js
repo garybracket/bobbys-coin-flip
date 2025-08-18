@@ -73,15 +73,15 @@ function displayPodium(leaderboard) {
                     </div>
                 </div>
                 <div class="bg-gradient-card backdrop-blur-lg rounded-lg p-4 border border-slate-700/30 ${actualRank === 1 ? 'ring-2 ring-yellow-400/30' : ''}">
-                    <div class="font-orbitron font-bold ${sizeClass} text-white mb-1">${player.username}</div>
-                    <div class="text-yellow-400 font-bold mb-2">${player.totalCoins} coins</div>
+                    <div class="font-orbitron font-bold ${sizeClass} text-white mb-1">${player.username || 'Unknown'}</div>
+                    <div class="text-yellow-400 font-bold mb-2">${player.totalCoins || 0} coins</div>
                     <div class="mb-2">
-                        <span class="inline-block px-2 py-1 rounded text-xs font-bold" style="color: ${player.rankColor}; background: ${player.rankColor}20; border: 1px solid ${player.rankColor}50;">
-                            ${player.rankEmoji} ${player.rank} (Lv.${player.level})
+                        <span class="inline-block px-2 py-1 rounded text-xs font-bold" style="color: ${player.rankColor || '#10b981'}; background: ${player.rankColor || '#10b981'}20; border: 1px solid ${player.rankColor || '#10b981'}50;">
+                            ${player.rankEmoji || '🌱'} ${player.rank || 'Novice'} (Lv.${player.level || 1})
                         </span>
                     </div>
                     <div class="text-xs text-slate-400">
-                        ${player.winRate}% win rate • ${player.bestWinStreak} streak
+                        ${player.winRate || 0}% win rate • ${player.bestWinStreak || 0} streak
                     </div>
                 </div>
                 <div class="${getPodiumClass(actualRank)} ${heightClass} mt-2 rounded-t-lg shadow-lg flex items-end justify-center pb-2">
@@ -120,16 +120,16 @@ function displayLeaderboard(leaderboard) {
                         <div class="flex items-center space-x-3">
                             <div class="font-bold text-lg ${rankClass}">${rankDisplay}</div>
                             <div>
-                                <div class="font-semibold text-white">${player.username}</div>
-                                <div class="text-xs" style="color: ${player.rankColor};">${player.rankEmoji} ${player.rank} (Lv.${player.level})</div>
+                                <div class="font-semibold text-white">${player.username || 'Unknown'}</div>
+                                <div class="text-xs" style="color: ${player.rankColor || '#10b981'};">${player.rankEmoji || '🌱'} ${player.rank || 'Novice'} (Lv.${player.level || 1})</div>
                             </div>
                         </div>
-                        <div class="font-bold text-yellow-400">${player.totalCoins}</div>
+                        <div class="font-bold text-yellow-400">${player.totalCoins || 0}</div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 text-xs text-slate-400">
-                        <div>${player.gamesPlayed} games</div>
-                        <div>${player.winRate}% wins</div>
-                        <div>${player.bestWinStreak} streak</div>
+                        <div>${player.gamesPlayed || 0} games</div>
+                        <div>${player.winRate || 0}% wins</div>
+                        <div>${player.bestWinStreak || 0} streak</div>
                     </div>
                 </div>
 
@@ -137,14 +137,14 @@ function displayLeaderboard(leaderboard) {
                 <div class="hidden md:grid grid-cols-7 gap-4 items-center">
                     <div class="font-bold text-lg ${rankClass}">${rankDisplay}</div>
                     <div>
-                        <div class="font-semibold text-white">${player.username}</div>
-                        <div class="text-xs" style="color: ${player.rankColor};">${player.rankEmoji} ${player.rank} (Lv.${player.level})</div>
+                        <div class="font-semibold text-white">${player.username || 'Unknown'}</div>
+                        <div class="text-xs" style="color: ${player.rankColor || '#10b981'};">${player.rankEmoji || '🌱'} ${player.rank || 'Novice'} (Lv.${player.level || 1})</div>
                     </div>
-                    <div class="text-center font-bold text-yellow-400">${player.totalCoins}</div>
-                    <div class="text-center text-slate-300">${player.gamesPlayed}</div>
-                    <div class="text-center text-slate-300">${player.winRate}%</div>
-                    <div class="text-center text-slate-300">${player.bestWinStreak}</div>
-                    <div class="text-center text-blue-400 text-sm">${player.totalXP} XP</div>
+                    <div class="text-center font-bold text-yellow-400">${player.totalCoins || 0}</div>
+                    <div class="text-center text-slate-300">${player.gamesPlayed || 0}</div>
+                    <div class="text-center text-slate-300">${player.winRate || 0}%</div>
+                    <div class="text-center text-slate-300">${player.bestWinStreak || 0}</div>
+                    <div class="text-center text-blue-400 text-sm">${player.totalXP || 0} XP</div>
                 </div>
             </div>
         `;

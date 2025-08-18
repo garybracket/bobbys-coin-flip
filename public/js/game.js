@@ -25,10 +25,11 @@ async function logout() {
 
 function setBet(amount) {
     const betInput = document.getElementById('betAmount');
+    const totalCoins = (currentUser && currentUser.stats && currentUser.stats.totalCoins) || 0;
     if (amount === 'all') {
-        betInput.value = currentUser.stats.totalCoins;
+        betInput.value = totalCoins;
     } else {
-        betInput.value = Math.min(amount, currentUser.stats.totalCoins);
+        betInput.value = Math.min(amount, totalCoins);
     }
 }
 
@@ -39,9 +40,12 @@ function updateUI() {
         const streakEl = document.getElementById('streak');
         const betAmountEl = document.getElementById('betAmount');
         
-        if (balanceEl) balanceEl.textContent = currentUser.stats.totalCoins;
-        if (streakEl) streakEl.textContent = currentUser.stats.winStreak;
-        if (betAmountEl) betAmountEl.max = currentUser.stats.totalCoins;
+        const totalCoins = (currentUser.stats && currentUser.stats.totalCoins) || 0;
+        const winStreak = (currentUser.stats && currentUser.stats.winStreak) || 0;
+        
+        if (balanceEl) balanceEl.textContent = totalCoins;
+        if (streakEl) streakEl.textContent = winStreak;
+        if (betAmountEl) betAmountEl.max = totalCoins;
         
         // Update level and rank display
         if (currentUser.levelInfo && currentUser.rankInfo) {
@@ -128,7 +132,9 @@ function showResult(result, won, winAmount, newBalance, xpReward, levelInfo, ran
     console.log('Result HTML set, content length:', resultHTML.length);
     
     // Update user stats and level info
-    currentUser.stats.totalCoins = newBalance;
+    if (currentUser && currentUser.stats) {
+        currentUser.stats.totalCoins = newBalance;
+    }
     if (levelInfo) currentUser.levelInfo = levelInfo;
     if (rankInfo) currentUser.rankInfo = rankInfo;
     updateUI();
@@ -153,7 +159,8 @@ async function flipCoin(prediction) {
         return;
     }
     
-    if (betAmount > currentUser.stats.totalCoins) {
+    const totalCoins = (currentUser && currentUser.stats && currentUser.stats.totalCoins) || 0;
+    if (betAmount > totalCoins) {
         showMessage('You don\'t have enough coins for this bet', 'error');
         return;
     }

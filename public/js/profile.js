@@ -26,18 +26,18 @@ function formatDate(dateString) {
 }
 
 function displayUserStats(user) {
-    document.getElementById('username').textContent = user.username;
-    document.getElementById('totalCoins').textContent = user.stats.totalCoins;
-    document.getElementById('gamesPlayed').textContent = user.stats.gamesPlayed;
-    document.getElementById('gamesWon').textContent = user.stats.gamesWon;
+    document.getElementById('username').textContent = user.username || 'Unknown';
+    document.getElementById('totalCoins').textContent = (user.stats && user.stats.totalCoins) || 0;
+    document.getElementById('gamesPlayed').textContent = (user.stats && user.stats.gamesPlayed) || 0;
+    document.getElementById('gamesWon').textContent = (user.stats && user.stats.gamesWon) || 0;
     
-    const winRate = user.stats.gamesPlayed > 0 
-        ? ((user.stats.gamesWon / user.stats.gamesPlayed) * 100).toFixed(1) 
-        : 0;
+    const gamesPlayed = (user.stats && user.stats.gamesPlayed) || 0;
+    const gamesWon = (user.stats && user.stats.gamesWon) || 0;
+    const winRate = gamesPlayed > 0 ? ((gamesWon / gamesPlayed) * 100).toFixed(1) : 0;
     document.getElementById('winRate').textContent = winRate + '%';
     
-    document.getElementById('currentStreak').textContent = user.stats.winStreak;
-    document.getElementById('bestStreak').textContent = user.stats.bestWinStreak;
+    document.getElementById('currentStreak').textContent = (user.stats && user.stats.winStreak) || 0;
+    document.getElementById('bestStreak').textContent = (user.stats && user.stats.bestWinStreak) || 0;
 }
 
 function displayGameHistory(history) {
@@ -74,11 +74,11 @@ function displayGameHistory(history) {
                     <div class="font-bold ${amountColor}">${amountText} coins</div>
                 </div>
                 <div class="text-sm text-slate-300 mb-1">
-                    Predicted: <span class="font-medium text-yellow-400">${game.prediction.toUpperCase()}</span> • 
-                    Result: <span class="font-medium text-yellow-400">${game.result.toUpperCase()}</span>
+                    Predicted: <span class="font-medium text-yellow-400">${(game.prediction || 'unknown').toUpperCase()}</span> • 
+                    Result: <span class="font-medium text-yellow-400">${(game.result || 'unknown').toUpperCase()}</span>
                 </div>
                 <div class="text-xs text-slate-400">
-                    Bet: ${game.bet} coins • ${formatDate(game.timestamp)}
+                    Bet: ${game.bet || 0} coins • ${formatDate(game.timestamp)}
                 </div>
             </div>
         `;

@@ -162,15 +162,103 @@ class Database {
   }
 
   // Leaderboard functions
-  async getLeaderboard(limit = 10) {
+  // Admin function to get all users
+  async getAllUsers() {
     try {
       const { data, error } = await supabase
-        .from('leaderboard_view')
+        .from('users')
+        .select('username, total_coins, games_played');
+
+      if (error) throw error;
+      return { success: true, users: data };
+    } catch (error) {
+      console.error('Database.getAllUsers error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Admin function to delete users (be careful!)
+  async deleteUser(username) {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('username', username);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('Database.deleteUser error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getLeaderboard(limit = 10) {
+    try {
+      // Get users with their stats, ordered by total coins
+      const { data, error } = await supabase
+        .from('users')
         .select('*')
+        .order('total_coins', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
-      return { success: true, leaderboard: data };
+
+      // Calculate additional fields and ensure no nulls
+      const leaderboard = data.map(user => {
+        const totalCoins = user.total_coins || 0;
+        const gamesPlayed = user.games_played || 0;
+        const gamesWon = user.games_won || 0;
+        const winRate = gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0;
+        const bestWinStreak = user.best_win_streak || 0;
+        const totalXP = user.total_xp || 0;
+        
+        // Calculate level from XP
+        const level = Math.floor(totalXP / 100) + 1;
+        
+        // Determine rank based on level and coins
+        let rank = '🌱 Novice';
+        let rankColor = '#10b981';
+        let rankEmoji = '🌱';
+        
+        if (level >= 50) {
+          rank = '👑 Legend';
+          rankColor = '#fbbf24';
+          rankEmoji = '👑';
+        } else if (level >= 25) {
+          rank = '⭐ Master';
+          rankColor = '#8b5cf6';
+          rankEmoji = '⭐';
+        } else if (level >= 15) {
+          rank = '🔥 Expert';
+          rankColor = '#ef4444';
+          rankEmoji = '🔥';
+        } else if (level >= 10) {
+          rank = '💎 Advanced';
+          rankColor = '#06b6d4';
+          rankEmoji = '💎';
+        } else if (level >= 5) {
+          rank = '🚀 Rising';
+          rankColor = '#f59e0b';
+          rankEmoji = '🚀';
+        }
+
+        return {
+          username: user.username || 'Unknown',
+          totalCoins,
+          gamesPlayed,
+          gamesWon,
+          winRate,
+          bestWinStreak,
+          totalXP,
+          level,
+          rank,
+          rankColor,
+          rankEmoji
+        };
+      });
+
+      return { success: true, leaderboard };
     } catch (error) {
       console.error('Database.getLeaderboard error:', error);
       return { success: false, error: error.message };

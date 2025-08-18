@@ -267,22 +267,22 @@ app.get('/api/user', async (req, res) => {
   res.json({ 
     success: true, 
     user: {
-      username: user.username,
+      username: user.username || 'Unknown',
       stats: {
-        gamesPlayed: user.games_played,
-        gamesWon: user.games_won,
-        gamesLost: user.games_lost,
-        winStreak: user.win_streak,
-        bestWinStreak: user.best_win_streak,
-        totalCoins: user.total_coins,
-        totalXP: user.total_xp,
+        gamesPlayed: user.games_played || 0,
+        gamesWon: user.games_won || 0,
+        gamesLost: user.games_lost || 0,
+        winStreak: user.win_streak || 0,
+        bestWinStreak: user.best_win_streak || 0,
+        totalCoins: user.total_coins || 0,
+        totalXP: user.total_xp || 0,
         lastLogin: user.last_login,
         multiplayerStats: {
-          matchesPlayed: user.multiplayer_matches_played,
-          matchesWon: user.multiplayer_matches_won,
-          matchesLost: user.multiplayer_matches_lost,
-          roundsWon: user.multiplayer_rounds_won,
-          roundsLost: user.multiplayer_rounds_lost
+          matchesPlayed: user.multiplayer_matches_played || 0,
+          matchesWon: user.multiplayer_matches_won || 0,
+          matchesLost: user.multiplayer_matches_lost || 0,
+          roundsWon: user.multiplayer_rounds_won || 0,
+          roundsLost: user.multiplayer_rounds_lost || 0
         }
       },
       levelInfo: levelInfo,
@@ -408,6 +408,31 @@ app.post('/api/flip', async (req, res) => {
     levelInfo,
     rankInfo
   });
+});
+
+// Temporary admin endpoint to clean up database
+app.post('/api/admin/cleanup', async (req, res) => {
+  if (!req.session.userId || req.session.userId !== 'garybracket') {
+    return res.json({ success: false, message: 'Unauthorized' });
+  }
+  
+  try {
+    // Get all users except garybracket
+    const usersResult = await database.getAllUsers();
+    if (!usersResult.success) {
+      return res.json({ success: false, message: 'Failed to get users' });
+    }
+    
+    const toDelete = usersResult.users.filter(user => user.username !== 'garybracket');
+    
+    for (const user of toDelete) {
+      await database.deleteUser(user.username);
+    }
+    
+    res.json({ success: true, message: `Deleted ${toDelete.length} users`, deletedUsers: toDelete.map(u => u.username) });
+  } catch (error) {
+    res.json({ success: false, message: 'Cleanup failed', error: error.message });
+  }
 });
 
 app.get('/api/leaderboard', async (req, res) => {
