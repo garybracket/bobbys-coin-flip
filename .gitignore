@@ -1,0 +1,45 @@
+# Claude context
+CLAUDE.md
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment and config
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Session and cookie files
+cookies*.txt
+prod_cookies.txt
+sessions/
+
+# Build outputs
+dist/
+build/
+
+# Temporary files
+*.tmp
+temp/
+tmp/
+
+# Debug files
+debug/
+*.debug
