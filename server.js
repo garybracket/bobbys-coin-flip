@@ -457,13 +457,15 @@ io.on('connection', (socket) => {
     }
 
     const username = session.userId;
-    const user = users.get(username);
+    const userResult = await database.getUserByUsername(username);
     
-    if (!user) {
+    if (!userResult.success) {
       console.error(`[${socket.id}] Connection failed: User ${username} not found`);
       socket.emit('error', 'User not found');
       return;
     }
+    
+    const user = userResult.user;
 
     // Add player to online players
     const playerData = {
@@ -784,7 +786,7 @@ io.on('connection', (socket) => {
       console.log(`[MP-PREDICT] ✅ ${player.username} successfully predicted ${prediction} in round ${match.currentRound}`);
       console.log(`[MP-PREDICT] Executing round - Caller: ${currentRound.caller} called ${currentRound.callerPrediction}, Opponent: ${player.username} predicted ${prediction}`);
       
-      executeRound(match);
+      await executeRound(match);
       
     } catch (error) {
       console.error(`[MP-PREDICT] Error in make_prediction:`, error);
@@ -909,7 +911,7 @@ function startMatch(player1, player2, totalRounds, betAmount) {
   }
 }
 
-function executeRound(match) {
+async function executeRound(match) {
   try {
     console.log(`[MP-EXECUTE] 🎯 Executing round ${match.currentRound} for match ${match.matchId}`);
     
@@ -999,7 +1001,7 @@ function executeRound(match) {
   const majorityWins = Math.ceil(match.totalRounds / 2);
   if (match.player1Score >= majorityWins || match.player2Score >= majorityWins || 
       match.currentRound >= match.totalRounds) {
-    endMatch(match);
+    await endMatch(match);
   } else {
     // Start next round
     match.currentRound++;
@@ -1020,7 +1022,7 @@ function executeRound(match) {
   }
 }
 
-function endMatch(match) {
+async function endMatch(match) {
   let winner = null;
   if (match.player1Score > match.player2Score) {
     winner = match.player1.username;
@@ -1033,8 +1035,10 @@ function endMatch(match) {
   match.endTime = new Date().toISOString();
   
   // Update user stats and coins
-  const user1 = users.get(match.player1.username);
-  const user2 = users.get(match.player2.username);
+  const user1Result = await database.getUserByUsername(match.player1.username);
+  const user2Result = await database.getUserByUsername(match.player2.username);
+  const user1 = user1Result.success ? user1Result.user : null;
+  const user2 = user2Result.success ? user2Result.user : null;
   
   let player1XP = null;
   let player2XP = null;

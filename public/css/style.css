@@ -7,6 +7,13 @@
     transition: transform 1s cubic-bezier(0.4, 0.0, 0.2, 1);
     filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.4));
     position: relative;
+    transform: rotateY(0deg);
+}
+
+/* Add perspective to coin container */
+.coin-container {
+    perspective: 1000px;
+    perspective-origin: center center;
 }
 
 .coin-face {

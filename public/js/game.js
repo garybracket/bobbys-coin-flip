@@ -199,14 +199,14 @@ async function flipCoin(prediction) {
             // Reset coin to neutral state (always start with heads showing)
             coin.classList.remove('flip-heads', 'flip-tails');
             coin.style.transform = 'rotateY(0deg)';
-            console.log(`[COIN-RESET] Coin reset to heads position`);
+            console.log(`[COIN-RESET] Coin reset to heads position for result: ${result.result}`);
             
             // Force reflow before adding animation class
             void coin.offsetHeight;
             
             setTimeout(() => {
                 coin.classList.add(flipClass);
-                console.log('Animation started');
+                console.log(`[COIN-ANIMATION] Added ${flipClass} class - should end showing ${result.result}`);
             }, 50);
             
             // Show result after animation - with fallback

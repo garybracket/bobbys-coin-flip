@@ -152,9 +152,11 @@
                 <div class="bg-gradient-card backdrop-blur-xl rounded-2xl p-8 md:p-12 border border-slate-700/30 shadow-2xl">
                     <div class="text-center">
                         <div class="flex justify-center mb-8">
-                            <div class="coin w-40 h-40 md:w-48 md:h-48" id="coin">
-                                <div class="coin-face coin-heads"></div>
-                                <div class="coin-face coin-tails"></div>
+                            <div class="coin-container">
+                                <div class="coin w-40 h-40 md:w-48 md:h-48" id="coin">
+                                    <div class="coin-face coin-heads"></div>
+                                    <div class="coin-face coin-tails"></div>
+                                </div>
                             </div>
                         </div>
 
@@ -198,14 +200,14 @@
                                     <button onclick="flipCoin('heads')" id="headsBtn" 
                                             class="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-lg hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                                         <div class="flex items-center justify-center space-x-2">
-                                            <span class="text-2xl">🪙</span>
+                                            <span class="text-2xl">👑</span>
                                             <span>HEADS</span>
                                         </div>
                                     </button>
                                     <button onclick="flipCoin('tails')" id="tailsBtn" 
                                             class="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold text-lg hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                                         <div class="flex items-center justify-center space-x-2">
-                                            <span class="text-2xl">🪙</span>
+                                            <span class="text-2xl">🦅</span>
                                             <span>TAILS</span>
                                         </div>
                                     </button>

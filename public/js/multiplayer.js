@@ -239,14 +239,14 @@ function updateMatchUI() {
                     <button onclick="makeCall('heads')" 
                             class="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-lg hover:scale-105 transition-all duration-200 shadow-lg">
                         <div class="flex items-center justify-center space-x-2">
-                            <span class="text-2xl">🪙</span>
+                            <span class="text-2xl">👑</span>
                             <span>CALL HEADS</span>
                         </div>
                     </button>
                     <button onclick="makeCall('tails')" 
                             class="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold text-lg hover:scale-105 transition-all duration-200 shadow-lg">
                         <div class="flex items-center justify-center space-x-2">
-                            <span class="text-2xl">🪙</span>
+                            <span class="text-2xl">🦅</span>
                             <span>CALL TAILS</span>
                         </div>
                     </button>
@@ -265,14 +265,14 @@ function updateMatchUI() {
                     <button onclick="makePrediction('heads')" 
                             class="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold text-lg hover:scale-105 transition-all duration-200 shadow-lg">
                         <div class="flex items-center justify-center space-x-2">
-                            <span class="text-2xl">🪙</span>
+                            <span class="text-2xl">👑</span>
                             <span>HEADS</span>
                         </div>
                     </button>
                     <button onclick="makePrediction('tails')" 
                             class="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold text-lg hover:scale-105 transition-all duration-200 shadow-lg">
                         <div class="flex items-center justify-center space-x-2">
-                            <span class="text-2xl">🪙</span>
+                            <span class="text-2xl">🦅</span>
                             <span>TAILS</span>
                         </div>
                     </button>
