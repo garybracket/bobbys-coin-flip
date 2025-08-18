@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const database = require('./database');
 
 const app = express();
 const server = createServer(app);
@@ -17,15 +18,18 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// In-memory storage (replace with database in production)
-const users = new Map();
-const gameHistory = new Map();
-
-// Multiplayer game storage
+// Real-time multiplayer storage (keep in memory for performance)
 const onlinePlayers = new Map(); // socketId -> playerData
-const gameLobbies = new Map();   // lobbyId -> lobbyData
 const activeMatches = new Map(); // matchId -> matchData
-const privateRooms = new Map();  // roomCode -> roomData
+
+// Test database connection on startup
+database.testConnection().then(result => {
+  if (result.success) {
+    console.log('✅ Database connected successfully');
+  } else {
+    console.error('❌ Database connection failed:', result.error);
+  }
+});
 
 // Helper functions for game logic
 function generateRoomCode() {
@@ -174,7 +178,7 @@ app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
 
-// API Routes (existing single-player routes)
+// API Routes (database-backed)
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   
@@ -182,35 +186,19 @@ app.post('/api/register', async (req, res) => {
     return res.json({ success: false, message: 'Username and password required' });
   }
   
-  if (users.has(username)) {
+  // Check if user already exists
+  const existingUser = await database.getUserByUsername(username);
+  if (existingUser.success) {
     return res.json({ success: false, message: 'Username already exists' });
   }
   
+  // Create new user
   const hashedPassword = await bcrypt.hash(password, 10);
-  users.set(username, {
-    username,
-    password: hashedPassword,
-    stats: {
-      gamesPlayed: 0,
-      gamesWon: 0,
-      gamesLost: 0,
-      winStreak: 0,
-      bestWinStreak: 0,
-      totalCoins: 100,
-      totalXP: 0,
-      lastLogin: new Date().toISOString(),
-      multiplayerStats: {
-        matchesPlayed: 0,
-        matchesWon: 0,
-        matchesLost: 0,
-        roundsWon: 0,
-        roundsLost: 0
-      },
-      created: new Date().toISOString()
-    }
-  });
+  const result = await database.createUser(username, hashedPassword);
   
-  gameHistory.set(username, []);
+  if (!result.success) {
+    return res.json({ success: false, message: 'Failed to create account: ' + result.error });
+  }
   
   req.session.userId = username;
   res.json({ success: true, message: 'Account created successfully' });
@@ -219,8 +207,8 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   
-  const user = users.get(username);
-  if (!user || !await bcrypt.compare(password, user.password)) {
+  const result = await database.getUserByUsername(username);
+  if (!result.success || !await bcrypt.compare(password, result.user.password_hash)) {
     return res.json({ success: false, message: 'Invalid username or password' });
   }
   
@@ -233,34 +221,70 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/api/user', (req, res) => {
+app.get('/api/user', async (req, res) => {
   if (!req.session.userId) {
     return res.json({ success: false, message: 'Not authenticated' });
   }
   
-  const user = users.get(req.session.userId);
+  const result = await database.getUserByUsername(req.session.userId);
+  if (!result.success) {
+    return res.json({ success: false, message: 'User not found' });
+  }
+  
+  const user = result.user;
   
   // Check for daily login bonus
   const now = new Date();
-  const lastLogin = new Date(user.stats.lastLogin || user.stats.created);
+  const lastLogin = new Date(user.last_login || user.created_at);
   const daysSinceLogin = Math.floor((now - lastLogin) / (24 * 60 * 60 * 1000));
   
   let dailyBonus = null;
   if (daysSinceLogin >= 1) {
-    const xpReward = awardXP(user, 20, 'Daily Login Bonus');
-    user.stats.lastLogin = now.toISOString();
-    dailyBonus = xpReward;
+    // Update last login and give XP bonus
+    const newXP = user.total_xp + 20;
+    await database.updateUser(req.session.userId, {
+      last_login: now.toISOString(),
+      total_xp: newXP
+    });
+    
+    const oldLevel = calculateLevel(user.total_xp);
+    const newLevel = calculateLevel(newXP);
+    dailyBonus = {
+      xpGained: 20,
+      totalXP: newXP,
+      oldLevel,
+      newLevel,
+      levelUp: newLevel > oldLevel,
+      reason: 'Daily Login Bonus'
+    };
+    user.total_xp = newXP;
   }
   
   // Calculate level info
-  const levelInfo = calculateXPToNext(user.stats.totalXP || 0);
+  const levelInfo = calculateXPToNext(user.total_xp || 0);
   const rankInfo = getRankInfo(levelInfo.currentLevel);
   
   res.json({ 
     success: true, 
     user: {
       username: user.username,
-      stats: user.stats,
+      stats: {
+        gamesPlayed: user.games_played,
+        gamesWon: user.games_won,
+        gamesLost: user.games_lost,
+        winStreak: user.win_streak,
+        bestWinStreak: user.best_win_streak,
+        totalCoins: user.total_coins,
+        totalXP: user.total_xp,
+        lastLogin: user.last_login,
+        multiplayerStats: {
+          matchesPlayed: user.multiplayer_matches_played,
+          matchesWon: user.multiplayer_matches_won,
+          matchesLost: user.multiplayer_matches_lost,
+          roundsWon: user.multiplayer_rounds_won,
+          roundsLost: user.multiplayer_rounds_lost
+        }
+      },
       levelInfo: levelInfo,
       rankInfo: rankInfo
     },
@@ -268,16 +292,23 @@ app.get('/api/user', (req, res) => {
   });
 });
 
-// Single-player coin flip (existing)
-app.post('/api/flip', (req, res) => {
+// Single-player coin flip (database-backed)
+app.post('/api/flip', async (req, res) => {
   if (!req.session.userId) {
     return res.json({ success: false, message: 'Not authenticated' });
   }
   
   const { bet, prediction } = req.body;
-  const user = users.get(req.session.userId);
   
-  if (bet <= 0 || bet > user.stats.totalCoins) {
+  // Get user from database
+  const userResult = await database.getUserByUsername(req.session.userId);
+  if (!userResult.success) {
+    return res.json({ success: false, message: 'User not found' });
+  }
+  
+  const user = userResult.user;
+  
+  if (bet <= 0 || bet > user.total_coins) {
     return res.json({ success: false, message: 'Invalid bet amount' });
   }
   
@@ -285,50 +316,69 @@ app.post('/api/flip', (req, res) => {
   const won = result === prediction;
   const winAmount = won ? bet : -bet;
   
-  // Update user stats
-  user.stats.gamesPlayed++;
-  user.stats.totalCoins += winAmount;
+  // Calculate new stats
+  const newStats = {
+    gamesPlayed: user.games_played + 1,
+    gamesWon: user.games_won + (won ? 1 : 0),
+    gamesLost: user.games_lost + (won ? 0 : 1),
+    totalCoins: user.total_coins + winAmount,
+    winStreak: won ? user.win_streak + 1 : 0,
+    bestWinStreak: user.best_win_streak,
+    totalXP: user.total_xp
+  };
   
-  // Award XP
-  let xpReward;
-  if (won) {
-    user.stats.gamesWon++;
-    user.stats.winStreak++;
-    if (user.stats.winStreak > user.stats.bestWinStreak) {
-      user.stats.bestWinStreak = user.stats.winStreak;
-    }
-    
-    // Base win XP + streak bonus
-    let xpAmount = 10;
-    if (user.stats.winStreak >= 5) xpAmount += 5;
-    if (user.stats.winStreak >= 10) xpAmount += 10;
-    if (user.stats.winStreak >= 20) xpAmount += 15;
-    
-    xpReward = awardXP(user, xpAmount, `Win (${user.stats.winStreak} streak)`);
-  } else {
-    user.stats.gamesLost++;
-    user.stats.winStreak = 0;
-    xpReward = awardXP(user, 2, 'Participation');
+  // Update best win streak if needed
+  if (newStats.winStreak > newStats.bestWinStreak) {
+    newStats.bestWinStreak = newStats.winStreak;
   }
   
+  // Calculate XP reward
+  let xpAmount = won ? 10 : 2;
+  if (won) {
+    if (newStats.winStreak >= 5) xpAmount += 5;
+    if (newStats.winStreak >= 10) xpAmount += 10;
+    if (newStats.winStreak >= 20) xpAmount += 15;
+  }
+  
+  const oldLevel = calculateLevel(user.total_xp);
+  newStats.totalXP = user.total_xp + xpAmount;
+  const newLevel = calculateLevel(newStats.totalXP);
+  
+  const xpReward = {
+    xpGained: xpAmount,
+    totalXP: newStats.totalXP,
+    oldLevel,
+    newLevel,
+    levelUp: newLevel > oldLevel,
+    reason: won ? `Win (${newStats.winStreak} streak)` : 'Participation'
+  };
+  
+  // Update user stats in database
+  await database.updateUserStats(req.session.userId, {
+    gamesPlayed: newStats.gamesPlayed,
+    gamesWon: newStats.gamesWon,
+    gamesLost: newStats.gamesLost,
+    winStreak: newStats.winStreak,
+    bestWinStreak: newStats.bestWinStreak,
+    totalCoins: newStats.totalCoins,
+    totalXP: newStats.totalXP,
+    lastLogin: user.last_login
+  });
+  
   // Add to game history
-  const history = gameHistory.get(req.session.userId);
-  history.unshift({
-    timestamp: new Date().toISOString(),
+  await database.addGameHistory(req.session.userId, {
     bet,
     prediction,
     result,
     won,
     winAmount,
-    balanceAfter: user.stats.totalCoins
+    balanceAfter: newStats.totalCoins,
+    xpGained: xpAmount,
+    levelAtTime: newLevel
   });
   
-  if (history.length > 50) {
-    history.splice(50);
-  }
-  
   // Calculate level info
-  const levelInfo = calculateXPToNext(user.stats.totalXP);
+  const levelInfo = calculateXPToNext(newStats.totalXP);
   const rankInfo = getRankInfo(levelInfo.currentLevel);
   
   res.json({
@@ -336,49 +386,62 @@ app.post('/api/flip', (req, res) => {
     result,
     won,
     winAmount,
-    newBalance: user.stats.totalCoins,
-    stats: user.stats,
+    newBalance: newStats.totalCoins,
+    stats: {
+      gamesPlayed: newStats.gamesPlayed,
+      gamesWon: newStats.gamesWon,
+      gamesLost: newStats.gamesLost,
+      winStreak: newStats.winStreak,
+      bestWinStreak: newStats.bestWinStreak,
+      totalCoins: newStats.totalCoins,
+      totalXP: newStats.totalXP,
+      lastLogin: user.last_login,
+      multiplayerStats: {
+        matchesPlayed: user.multiplayer_matches_played,
+        matchesWon: user.multiplayer_matches_won,
+        matchesLost: user.multiplayer_matches_lost,
+        roundsWon: user.multiplayer_rounds_won,
+        roundsLost: user.multiplayer_rounds_lost
+      }
+    },
     xpReward,
     levelInfo,
     rankInfo
   });
 });
 
-app.get('/api/leaderboard', (req, res) => {
-  const leaderboard = Array.from(users.values())
-    .map(user => {
-      const levelInfo = calculateXPToNext(user.stats.totalXP || 0);
-      const rankInfo = getRankInfo(levelInfo.currentLevel);
-      
-      return {
-        username: user.username,
-        totalCoins: user.stats.totalCoins,
-        gamesPlayed: user.stats.gamesPlayed,
-        winRate: user.stats.gamesPlayed > 0 ? (user.stats.gamesWon / user.stats.gamesPlayed * 100).toFixed(1) : 0,
-        bestWinStreak: user.stats.bestWinStreak,
-        level: levelInfo.currentLevel,
-        totalXP: user.stats.totalXP || 0,
-        rank: rankInfo.rank,
-        rankColor: rankInfo.color,
-        rankEmoji: rankInfo.emoji
-      };
-    })
-    .sort((a, b) => {
-      // Sort by level first, then by coins
-      if (a.level !== b.level) return b.level - a.level;
-      return b.totalCoins - a.totalCoins;
-    })
-    .slice(0, 10);
+app.get('/api/leaderboard', async (req, res) => {
+  const result = await database.getLeaderboard(10);
   
-  res.json({ success: true, leaderboard });
+  if (!result.success) {
+    return res.json({ success: false, message: 'Failed to fetch leaderboard' });
+  }
+  
+  res.json({ success: true, leaderboard: result.leaderboard });
 });
 
-app.get('/api/history', (req, res) => {
+app.get('/api/history', async (req, res) => {
   if (!req.session.userId) {
     return res.json({ success: false, message: 'Not authenticated' });
   }
   
-  const history = gameHistory.get(req.session.userId) || [];
+  const result = await database.getGameHistory(req.session.userId, 50);
+  
+  if (!result.success) {
+    return res.json({ success: false, message: 'Failed to fetch history' });
+  }
+  
+  // Convert database format to match frontend expectations
+  const history = result.history.map(game => ({
+    timestamp: game.timestamp,
+    bet: game.bet_amount,
+    prediction: game.prediction,
+    result: game.coin_result,
+    won: game.won,
+    winAmount: game.win_amount,
+    balanceAfter: game.balance_after
+  }));
+  
   res.json({ success: true, history });
 });
 

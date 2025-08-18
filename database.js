@@ -367,10 +367,9 @@ class Database {
   // Utility function to test database connection
   async testConnection() {
     try {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('users')
-        .select('count(*)', { count: 'exact' })
-        .limit(1);
+        .select('*', { count: 'exact', head: true });
 
       if (error) throw error;
       console.log('✅ Database connection successful');
