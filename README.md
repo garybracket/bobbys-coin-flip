@@ -43,7 +43,7 @@ A browser-based coin flipping game with user authentication, leaderboards, and s
 1. Clone the repository
 2. Install dependencies: `npm install`
 3. Start the server: `npm start`
-4. Open browser to `http://localhost:3000`
+4. Open browser to `http://localhost:PORT` (default: 3000)
 
 ## Deployment to Heroku
 

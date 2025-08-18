@@ -68,7 +68,7 @@ heroku ps:scale web=1
    ```
 
 3. **Access Application**
-   - Open browser to `http://localhost:3000`
+   - Open browser to `http://localhost:PORT` (default: 3000)
 
 ## Production Considerations
 
