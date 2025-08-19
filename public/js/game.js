@@ -235,8 +235,8 @@ async function flipCoin(prediction) {
             const flipClass = result.result === 'heads' ? 'flip-heads' : 'flip-tails';
             console.log('Adding flip class:', flipClass);
             
-            // Reset coin to neutral state (always start with heads showing)
-            coin.classList.remove('flip-heads', 'flip-tails');
+            // Reset coin to heads state (remove any existing classes)
+            coin.classList.remove('flip-heads', 'flip-tails', 'showing-tails');
             coin.style.transform = 'rotateY(0deg)';
             console.log(`[COIN-RESET] Coin reset to heads position for result: ${result.result}`);
             
@@ -246,6 +246,17 @@ async function flipCoin(prediction) {
             setTimeout(() => {
                 coin.classList.add(flipClass);
                 console.log(`[COIN-ANIMATION] Added ${flipClass} class - should end showing ${result.result}`);
+                
+                // After the flip animation, show the correct side
+                setTimeout(() => {
+                    if (result.result === 'tails') {
+                        coin.classList.add('showing-tails');
+                        console.log('[COIN-STATE] Added showing-tails class - coin should now show eagle');
+                    } else {
+                        coin.classList.remove('showing-tails');
+                        console.log('[COIN-STATE] Removed showing-tails class - coin should now show crown');
+                    }
+                }, 1200); // Match the animation duration
                 
                 // Play coin flip sound
                 playCoinSound();
