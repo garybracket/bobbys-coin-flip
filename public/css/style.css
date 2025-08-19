@@ -10,10 +10,6 @@
     transform: rotateY(0deg);
 }
 
-/* Debug: temporarily show tails to test visibility */
-.coin.debug-tails {
-    transform: rotateY(180deg) !important;
-}
 
 /* Add perspective to coin container */
 .coin-container {
@@ -22,8 +18,7 @@
 }
 
 .coin-face {
-    /* Temporarily remove backface-visibility to debug */
-    /* backface-visibility: hidden; */
+    backface-visibility: hidden;
     border: 8px solid #d97706;
     position: absolute;
     top: 0;
@@ -39,7 +34,7 @@
     overflow: hidden;
 }
 
-/* Shiny edge effect */
+/* Shiny edge effect - only on coin faces */
 .coin-face::before {
     content: '';
     position: absolute;
@@ -50,6 +45,7 @@
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
     animation: shine 3s infinite;
     z-index: 10;
+    pointer-events: none;
 }
 
 /* Heads side - Gold with crown */
@@ -73,7 +69,7 @@
     z-index: 20;
 }
 
-/* Tails side - Silver with eagle */
+/* Tails side - Silver with eagle - Rotated 180deg to be "behind" heads initially */
 .coin-tails {
     transform: rotateY(180deg);
     background: radial-gradient(circle at 30% 30%, #e5e7eb, #9ca3af, #6b7280);
@@ -89,7 +85,7 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) rotateY(180deg);
     filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
     z-index: 20;
 }

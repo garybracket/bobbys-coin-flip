@@ -293,48 +293,6 @@ async function flipCoin(prediction) {
     }
 }
 
-// Debug function to test coin sides
-function debugCoinSides() {
-    const coin = document.getElementById('coin');
-    if (!coin) return;
-    
-    console.log('Testing coin sides...');
-    
-    // Test heads
-    setTimeout(() => {
-        coin.className = 'coin w-40 h-40 md:w-48 md:h-48';
-        coin.style.transform = 'rotateY(0deg)';
-        console.log('Showing heads (0deg)');
-    }, 1000);
-    
-    // Test tails
-    setTimeout(() => {
-        coin.className = 'coin w-40 h-40 md:w-48 md:h-48';
-        coin.style.transform = 'rotateY(180deg)';
-        console.log('Showing tails (180deg)');
-    }, 3000);
-    
-    // Test intermediate angles
-    setTimeout(() => {
-        coin.style.transform = 'rotateY(90deg)';
-        console.log('Showing 90deg (edge)');
-    }, 5000);
-}
-
-// Add debug button to page
-function addDebugButton() {
-    const debugBtn = document.createElement('button');
-    debugBtn.textContent = 'Debug Coin';
-    debugBtn.onclick = debugCoinSides;
-    debugBtn.style.position = 'fixed';
-    debugBtn.style.top = '10px';
-    debugBtn.style.right = '10px';
-    debugBtn.style.zIndex = '9999';
-    debugBtn.style.background = 'red';
-    debugBtn.style.color = 'white';
-    debugBtn.style.padding = '10px';
-    document.body.appendChild(debugBtn);
-}
 
 // Load user data
 window.addEventListener('DOMContentLoaded', async () => {
@@ -356,9 +314,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             }
             
             updateUI();
-            
-            // Add debug button in development
-            addDebugButton();
         } else {
             // Not authenticated, redirect to login
             window.location.href = '/';
