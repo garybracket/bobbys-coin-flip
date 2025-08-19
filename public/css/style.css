@@ -10,6 +10,11 @@
     transform: rotateY(0deg);
 }
 
+/* Debug: temporarily show tails to test visibility */
+.coin.debug-tails {
+    transform: rotateY(180deg) !important;
+}
+
 /* Add perspective to coin container */
 .coin-container {
     perspective: 1000px;
@@ -17,7 +22,8 @@
 }
 
 .coin-face {
-    backface-visibility: hidden;
+    /* Temporarily remove backface-visibility to debug */
+    /* backface-visibility: hidden; */
     border: 8px solid #d97706;
     position: absolute;
     top: 0;
@@ -46,7 +52,7 @@
     z-index: 10;
 }
 
-/* Heads side - Gold with presidential profile */
+/* Heads side - Gold with crown */
 .coin-heads {
     transform: rotateY(0deg);
     background: radial-gradient(circle at 30% 30%, #fbbf24, #f59e0b, #d97706);
@@ -64,6 +70,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+    z-index: 20;
 }
 
 /* Tails side - Silver with eagle */
@@ -84,6 +91,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+    z-index: 20;
 }
 
 /* Animation states for coin */
