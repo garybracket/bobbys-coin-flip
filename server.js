@@ -471,7 +471,7 @@ app.get('/api/history', async (req, res) => {
 });
 
 // Socket.IO multiplayer functionality
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   try {
     const session = socket.request.session;
     
@@ -742,7 +742,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('make_prediction', (data) => {
+  socket.on('make_prediction', async (data) => {
     try {
       console.log(`[MP-PREDICT] ${socket.id} making prediction:`, data);
       
