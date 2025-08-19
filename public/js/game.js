@@ -9,21 +9,42 @@ function createCoinFlipSound() {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
         function playSound() {
-            const oscillator = audioContext.createOscillator();
+            // Create a grunt-like sound effect
+            const oscillator1 = audioContext.createOscillator();
+            const oscillator2 = audioContext.createOscillator();
+            const filter = audioContext.createBiquadFilter();
             const gainNode = audioContext.createGain();
             
-            oscillator.connect(gainNode);
+            // Set up filter for grunt-like quality
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(400, audioContext.currentTime);
+            filter.Q.setValueAtTime(5, audioContext.currentTime);
+            
+            // Connect audio nodes
+            oscillator1.connect(filter);
+            oscillator2.connect(filter);
+            filter.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            // Create a metallic "ting" sound
-            oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+            // Create grunt-like frequencies
+            oscillator1.type = 'sawtooth';
+            oscillator1.frequency.setValueAtTime(120, audioContext.currentTime);
+            oscillator1.frequency.exponentialRampToValueAtTime(80, audioContext.currentTime + 0.15);
             
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            oscillator2.type = 'triangle';
+            oscillator2.frequency.setValueAtTime(240, audioContext.currentTime);
+            oscillator2.frequency.exponentialRampToValueAtTime(160, audioContext.currentTime + 0.15);
             
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.3);
+            // Grunt-like volume envelope
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
+            
+            // Start and stop oscillators
+            oscillator1.start();
+            oscillator2.start();
+            oscillator1.stop(audioContext.currentTime + 0.25);
+            oscillator2.stop(audioContext.currentTime + 0.25);
         }
         
         return playSound;
