@@ -9,42 +9,55 @@ function createCoinFlipSound() {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
         function playSound() {
-            // Create a grunt-like sound effect
-            const oscillator1 = audioContext.createOscillator();
-            const oscillator2 = audioContext.createOscillator();
-            const filter = audioContext.createBiquadFilter();
-            const gainNode = audioContext.createGain();
+            // Create multiple metallic sounds for realistic coin effect
+            const now = audioContext.currentTime;
             
-            // Set up filter for grunt-like quality
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(400, audioContext.currentTime);
-            filter.Q.setValueAtTime(5, audioContext.currentTime);
+            // Create three quick metallic sounds to simulate coin spinning and landing
+            for (let i = 0; i < 3; i++) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                const filter = audioContext.createBiquadFilter();
+                
+                // High frequency metallic ring
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(2000 + Math.random() * 1000, now + i * 0.1);
+                oscillator.frequency.exponentialRampToValueAtTime(800, now + i * 0.1 + 0.15);
+                
+                // Filter for metallic quality
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(2500, now);
+                filter.Q.setValueAtTime(10, now);
+                
+                // Connect nodes
+                oscillator.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Quick attack and decay for metallic "ting"
+                gainNode.gain.setValueAtTime(0, now + i * 0.1);
+                gainNode.gain.linearRampToValueAtTime(0.2 - i * 0.05, now + i * 0.1 + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.2);
+                
+                // Start and stop
+                oscillator.start(now + i * 0.1);
+                oscillator.stop(now + i * 0.1 + 0.2);
+            }
             
-            // Connect audio nodes
-            oscillator1.connect(filter);
-            oscillator2.connect(filter);
-            filter.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+            // Add a subtle low frequency thud for landing
+            const thud = audioContext.createOscillator();
+            const thudGain = audioContext.createGain();
             
-            // Create grunt-like frequencies
-            oscillator1.type = 'sawtooth';
-            oscillator1.frequency.setValueAtTime(120, audioContext.currentTime);
-            oscillator1.frequency.exponentialRampToValueAtTime(80, audioContext.currentTime + 0.15);
+            thud.type = 'sine';
+            thud.frequency.setValueAtTime(60, now + 0.25);
             
-            oscillator2.type = 'triangle';
-            oscillator2.frequency.setValueAtTime(240, audioContext.currentTime);
-            oscillator2.frequency.exponentialRampToValueAtTime(160, audioContext.currentTime + 0.15);
+            thud.connect(thudGain);
+            thudGain.connect(audioContext.destination);
             
-            // Grunt-like volume envelope
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.02);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
+            thudGain.gain.setValueAtTime(0.15, now + 0.25);
+            thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
             
-            // Start and stop oscillators
-            oscillator1.start();
-            oscillator2.start();
-            oscillator1.stop(audioContext.currentTime + 0.25);
-            oscillator2.stop(audioContext.currentTime + 0.25);
+            thud.start(now + 0.25);
+            thud.stop(now + 0.35);
         }
         
         return playSound;
