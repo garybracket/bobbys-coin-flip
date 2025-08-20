@@ -60,6 +60,30 @@ class Database {
     }
   }
 
+  // Check if user has admin privileges
+  async isUserAdmin(username) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('is_admin')
+        .eq('username', username)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned - user doesn't exist
+          return { success: false, error: 'User not found' };
+        }
+        throw error;
+      }
+
+      return { success: true, isAdmin: data.is_admin || false };
+    } catch (error) {
+      console.error('Database.isUserAdmin error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   async updateUser(username, updates) {
     try {
       const { data, error } = await supabase

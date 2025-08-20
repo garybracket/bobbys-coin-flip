@@ -410,20 +410,41 @@ app.post('/api/flip', async (req, res) => {
   });
 });
 
-// Temporary admin endpoint to clean up database
-app.post('/api/admin/cleanup', async (req, res) => {
-  if (!req.session.userId || req.session.userId !== 'garybracket') {
-    return res.json({ success: false, message: 'Unauthorized' });
+// Admin helper function
+async function requireAdmin(req, res, next) {
+  if (!req.session.userId) {
+    return res.status(401).json({ success: false, message: 'Authentication required' });
   }
+
+  try {
+    const adminCheck = await database.isUserAdmin(req.session.userId);
+    if (!adminCheck.success) {
+      return res.status(500).json({ success: false, message: 'Database error checking admin status' });
+    }
+
+    if (!adminCheck.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Admin check error:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
+// Admin endpoint to clean up database
+app.post('/api/admin/cleanup', requireAdmin, async (req, res) => {
   
   try {
-    // Get all users except garybracket
+    // Get all users except admin users
     const usersResult = await database.getAllUsers();
     if (!usersResult.success) {
       return res.json({ success: false, message: 'Failed to get users' });
     }
     
-    const toDelete = usersResult.users.filter(user => user.username !== 'garybracket');
+    // Filter out admin users from deletion list
+    const toDelete = usersResult.users.filter(user => !user.is_admin);
     
     for (const user of toDelete) {
       await database.deleteUser(user.username);

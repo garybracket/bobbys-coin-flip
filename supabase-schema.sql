@@ -26,7 +26,10 @@ CREATE TABLE IF NOT EXISTS users (
   multiplayer_matches_won INTEGER DEFAULT 0,
   multiplayer_matches_lost INTEGER DEFAULT 0,
   multiplayer_rounds_won INTEGER DEFAULT 0,
-  multiplayer_rounds_lost INTEGER DEFAULT 0
+  multiplayer_rounds_lost INTEGER DEFAULT 0,
+  
+  -- Admin Role
+  is_admin BOOLEAN DEFAULT FALSE
 );
 
 -- Game History table to store individual game records
@@ -106,6 +109,7 @@ CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_total_coins ON users(total_coins DESC);
 CREATE INDEX IF NOT EXISTS idx_users_total_xp ON users(total_xp DESC);
 CREATE INDEX IF NOT EXISTS idx_users_best_win_streak ON users(best_win_streak DESC);
+CREATE INDEX IF NOT EXISTS idx_users_is_admin ON users(is_admin) WHERE is_admin = TRUE;
 
 CREATE INDEX IF NOT EXISTS idx_game_history_username ON game_history(username);
 CREATE INDEX IF NOT EXISTS idx_game_history_timestamp ON game_history(timestamp DESC);

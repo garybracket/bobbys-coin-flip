@@ -33,17 +33,46 @@ A browser-based coin flipping game with user authentication, leaderboards, and s
 ## Technical Stack
 - **Backend**: Node.js + Express
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Storage**: In-memory (for MVP)
-- **Authentication**: bcrypt for password hashing
+- **Database**: Supabase PostgreSQL
+- **Authentication**: bcrypt for password hashing + role-based admin system
 - **Sessions**: express-session
-- **Deployment**: Heroku ready
+- **Deployment**: Heroku ready with database persistence
 
 ## Local Development
 
 1. Clone the repository
 2. Install dependencies: `npm install`
-3. Start the server: `npm start`
-4. Open browser to `http://localhost:PORT` (default: 3000)
+3. Set up environment variables:
+   ```env
+   PORT=3000
+   SESSION_SECRET=your-random-secret-key
+   SUPABASE_URL=your-supabase-project-url
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   ```
+4. Start the server: `npm start`
+5. Open browser to `http://localhost:PORT` (default: 3000)
+
+## Database Management
+
+### Automated Migrations
+This project uses Supabase CLI for database schema management:
+
+```bash
+# Apply pending migrations to production
+supabase db push
+
+# Reset local database (requires supabase start)
+supabase db reset
+
+# Create new migration
+supabase migration new migration_name
+```
+
+### Admin System
+The application includes role-based administration:
+- Admin users can access `/api/admin/cleanup` endpoint
+- Admin role determined by `is_admin` column in users table
+- Replaces previous hardcoded admin check for security
 
 ## Deployment to Heroku
 
@@ -70,8 +99,10 @@ Ready for Google AdSense or other advertising networks.
 
 ## Future Feature Ideas
 
-### Immediate Enhancements
-- 🔄 Database persistence (PostgreSQL/MongoDB)
+### Immediate Enhancements  
+- ✅ Database persistence (Supabase PostgreSQL) - **COMPLETED**
+- ✅ Admin role management system - **COMPLETED**
+- ✅ Database migration automation - **COMPLETED**
 - 🎁 Daily bonus coins
 - 🏆 Achievement system
 - 👥 Friend system and challenges
