@@ -9,15 +9,16 @@ A browser-based coin flipping game with user authentication, leaderboards, and s
 - ✅ Coin flipping game with betting system
 - ✅ Animated coin with fancy design
 - ✅ User profiles with detailed statistics  
-- ✅ **Real-time multiplayer** with Socket.IO
-- ✅ **Private room system** with invite codes
+- ⚠️ **Real-time multiplayer** (disabled for Vercel serverless)
+- ⚠️ **Private room system** (disabled for Vercel serverless)
 - ✅ **XP/Leveling system** with 5 rank tiers
 - ✅ Real-time leaderboards with rankings
 - ✅ Game history tracking
 - ✅ **Role-based admin system** 
+- ✅ **Password change functionality**
 - ✅ Advertisement placement sections
 - ✅ Mobile-responsive dark theme design
-- ✅ Heroku deployment ready
+- ✅ **Vercel serverless deployment** (migrated from Heroku)
 
 ### Game Rules
 - Players start with 100 coins

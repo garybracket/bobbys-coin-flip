@@ -13,7 +13,7 @@ function showMessage(text, type = 'info') {
 
 async function logout() {
     try {
-        await fetch('/api/logout', { method: 'POST' });
+        await fetch('/api/auth?action=logout', { method: 'POST' });
         localStorage.removeItem('gameUser');
         window.location.href = '/';
     } catch (error) {

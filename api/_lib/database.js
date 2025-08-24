@@ -244,5 +244,6 @@ module.exports = {
   getLeaderboard,
   calculateLevel,
   getRankName,
-  getRankEmoji
+  getRankEmoji,
+  getSupabaseClient
 };

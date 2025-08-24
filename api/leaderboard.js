@@ -1,4 +1,4 @@
-const database = require('../_lib/database');
+const database = require('./_lib/database');
 
 module.exports = async (req, res) => {
   // Enable CORS

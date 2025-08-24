@@ -44,7 +44,7 @@ async function handleLogin(event) {
     };
     
     try {
-        const response = await fetch('/api/login', {
+        const response = await fetch('/api/auth?action=login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -89,7 +89,7 @@ async function handleRegister(event) {
     }
     
     try {
-        const response = await fetch('/api/register', {
+        const response = await fetch('/api/auth?action=register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
