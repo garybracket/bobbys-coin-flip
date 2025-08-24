@@ -48,15 +48,14 @@ async function createUser(username, email, password) {
         username,
         email,
         password_hash: password,
-        coins: 100,
+        total_coins: 100,
         level: 1,
-        xp: 0,
-        wins: 0,
-        losses: 0,
+        total_xp: 0,
+        games_won: 0,
+        games_lost: 0,
         games_played: 0,
         win_streak: 0,
-        best_streak: 0,
-        role: 'user',
+        best_win_streak: 0,
         created_at: new Date().toISOString()
       }])
       .select()
@@ -117,14 +116,15 @@ async function updateUserAfterFlip(username, result) {
     const { data, error } = await supabase
       .from('users')
       .update({
-        coins: result.newCoins,
-        xp: result.newXp,
+        total_coins: result.newCoins,
+        total_xp: result.newXp,
         level: result.newLevel,
-        wins: result.newWins,
-        losses: result.newLosses,
+        games_won: result.newWins,
+        games_lost: result.newLosses,
         games_played: result.newGamesPlayed,
         win_streak: result.newWinStreak,
-        best_streak: result.newBestStreak
+        best_win_streak: result.newBestStreak,
+        updated_at: new Date().toISOString()
       })
       .eq('username', username)
       .select()
@@ -192,17 +192,31 @@ async function getLeaderboard(limit = 100) {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('users')
-      .select('username, coins, level, xp, wins, losses, games_played, win_streak, best_streak')
-      .order('level', { ascending: false })
-      .order('xp', { ascending: false })
-      .order('coins', { ascending: false })
+      .select('*')
+      .order('total_coins', { ascending: false })
       .limit(limit);
 
     if (error) {
       return { success: false, error: error.message };
     }
     
-    return { success: true, users: data || [] };
+    // Calculate additional fields and ensure no nulls - match original logic
+    const leaderboard = data.map(user => {
+      const totalCoins = user.total_coins || 0;
+      const gamesPlayed = user.games_played || 0;
+      const gamesWon = user.games_won || 0;
+      const winRate = gamesPlayed > 0 ? ((gamesWon / gamesPlayed) * 100).toFixed(1) : '0.0';
+      
+      return {
+        ...user,
+        total_coins: totalCoins,
+        games_played: gamesPlayed,
+        games_won: gamesWon,
+        win_rate: parseFloat(winRate)
+      };
+    });
+    
+    return { success: true, users: leaderboard };
   } catch (err) {
     return { success: false, error: err.message };
   }
