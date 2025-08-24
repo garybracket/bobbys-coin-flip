@@ -78,7 +78,6 @@ async function handleFlip(req, res) {
   const newStats = {
     newCoins: newBalance,
     newXp: newXp,
-    newLevel: newLevel,
     newWins: (user.games_won || user.wins || 0) + (won ? 1 : 0),
     newLosses: (user.games_lost || user.losses || 0) + (won ? 0 : 1),
     newGamesPlayed: (user.games_played || 0) + 1,
