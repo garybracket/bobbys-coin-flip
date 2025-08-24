@@ -16,9 +16,8 @@ module.exports = async (req, res) => {
     if (action === 'flip-test') {
       // Test the updateUserAfterFlip function specifically
       const testStats = {
-        newCoins: 120,
+        newCoins: 130,
         newXp: 400,
-        newLevel: 15,
         newWins: 33,
         newLosses: 30,
         newGamesPlayed: 63,

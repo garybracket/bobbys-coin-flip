@@ -49,7 +49,6 @@ async function createUser(username, email, password) {
         email,
         password_hash: password,
         total_coins: 100,
-        level: 1,
         total_xp: 0,
         games_won: 0,
         games_lost: 0,
@@ -118,7 +117,6 @@ async function updateUserAfterFlip(username, result) {
       .update({
         total_coins: result.newCoins,
         total_xp: result.newXp,
-        level: result.newLevel,
         games_won: result.newWins,
         games_lost: result.newLosses,
         games_played: result.newGamesPlayed,
@@ -205,6 +203,8 @@ async function getLeaderboard(limit = 100) {
       const totalCoins = user.total_coins || 0;
       const gamesPlayed = user.games_played || 0;
       const gamesWon = user.games_won || 0;
+      const totalXp = user.total_xp || 0;
+      const level = calculateLevel(totalXp);
       const winRate = gamesPlayed > 0 ? ((gamesWon / gamesPlayed) * 100).toFixed(1) : '0.0';
       
       return {
@@ -212,10 +212,12 @@ async function getLeaderboard(limit = 100) {
         total_coins: totalCoins,
         games_played: gamesPlayed,
         games_won: gamesWon,
+        total_xp: totalXp,
+        level: level,
         win_rate: winRate,
         rank: index + 1,
-        rank_name: getRankName(user.level || 1),
-        rank_emoji: getRankEmoji(user.level || 1)
+        rank_name: getRankName(level),
+        rank_emoji: getRankEmoji(level)
       };
     });
     

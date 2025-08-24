@@ -27,17 +27,10 @@ module.exports = async (req, res) => {
       });
     }
 
-    const users = leaderboardResult.users.map((user, index) => ({
-      ...user,
-      rank: index + 1,
-      rank_name: database.getRankName(user.level),
-      rank_emoji: database.getRankEmoji(user.level),
-      win_rate: user.games_played > 0 ? ((user.wins / user.games_played) * 100).toFixed(1) : '0.0'
-    }));
-
+    // The database function now handles all calculations and formatting
     res.status(200).json({ 
       success: true, 
-      leaderboard: users 
+      leaderboard: leaderboardResult.users 
     });
 
   } catch (error) {
