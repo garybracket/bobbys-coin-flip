@@ -201,7 +201,7 @@ async function getLeaderboard(limit = 100) {
     }
     
     // Calculate additional fields and ensure no nulls - match original logic
-    const leaderboard = data.map(user => {
+    const leaderboard = data.map((user, index) => {
       const totalCoins = user.total_coins || 0;
       const gamesPlayed = user.games_played || 0;
       const gamesWon = user.games_won || 0;
@@ -212,7 +212,10 @@ async function getLeaderboard(limit = 100) {
         total_coins: totalCoins,
         games_played: gamesPlayed,
         games_won: gamesWon,
-        win_rate: parseFloat(winRate)
+        win_rate: winRate,
+        rank: index + 1,
+        rank_name: getRankName(user.level || 1),
+        rank_emoji: getRankEmoji(user.level || 1)
       };
     });
     
