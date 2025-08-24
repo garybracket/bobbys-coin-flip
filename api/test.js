@@ -13,6 +13,16 @@ module.exports = async (req, res) => {
   try {
     const { action } = req.query;
     
+    if (action === 'create-test') {
+      // Test the createUser function specifically
+      const result = await database.createUser('testuser_debug', 'testuser_debug@example.com', '$2a$10$test');
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Create test completed',
+        createResult: result
+      });
+    }
+    
     if (action === 'flip-test') {
       // Test the updateUserAfterFlip function specifically
       const testStats = {
