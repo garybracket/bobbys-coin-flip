@@ -1,18 +1,27 @@
 // Shared database utilities for Vercel serverless functions
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Initialize Supabase client lazily to avoid build-time errors
+let supabase = null;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables');
+function getSupabaseClient() {
+  if (!supabase) {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
+
+    supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  return supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Test database connection
 async function testConnection() {
   try {
+    const supabase = getSupabaseClient();
     const { count, error } = await supabase
       .from('users')
       .select('*', { count: 'exact', head: true });
@@ -32,6 +41,7 @@ async function testConnection() {
 // User authentication functions
 async function createUser(username, email, password) {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('users')
       .insert([{
@@ -64,6 +74,7 @@ async function createUser(username, email, password) {
 
 async function getUserByUsername(username) {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -82,6 +93,7 @@ async function getUserByUsername(username) {
 
 async function getUserByEmail(email) {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -101,6 +113,7 @@ async function getUserByEmail(email) {
 // Game functions
 async function updateUserAfterFlip(username, result) {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('users')
       .update({
@@ -129,6 +142,7 @@ async function updateUserAfterFlip(username, result) {
 
 async function saveGameHistory(username, gameData) {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('game_history')
       .insert([{
@@ -155,6 +169,7 @@ async function saveGameHistory(username, gameData) {
 
 async function getGameHistory(username, limit = 50) {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('game_history')
       .select('*')
@@ -174,6 +189,7 @@ async function getGameHistory(username, limit = 50) {
 
 async function getLeaderboard(limit = 100) {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('users')
       .select('username, coins, level, xp, wins, losses, games_played, win_streak, best_streak')
