@@ -46,7 +46,6 @@ async function createUser(username, email, password) {
       .from('users')
       .insert([{
         username,
-        email,
         password_hash: password,
         total_coins: 100,
         total_xp: 0,
@@ -89,24 +88,7 @@ async function getUserByUsername(username) {
   }
 }
 
-async function getUserByEmail(email) {
-  try {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-    
-    return { success: true, user: data };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
+// Note: getUserByEmail removed since schema doesn't have email column
 
 // Game functions
 async function updateUserAfterFlip(username, result) {
@@ -256,7 +238,6 @@ module.exports = {
   testConnection,
   createUser,
   getUserByUsername,
-  getUserByEmail,
   updateUserAfterFlip,
   saveGameHistory,
   getGameHistory,
