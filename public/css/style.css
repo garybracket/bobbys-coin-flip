@@ -1,6 +1,33 @@
 /* Custom CSS for coin animation and special effects */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap');
 
+/* Message styles */
+#message {
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+}
+
+#message.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.message.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: 1px solid #065f46;
+}
+
+.message.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: 1px solid #991b1b;
+}
+
+.message.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: 1px solid #1e40af;
+}
+
 /* Enhanced coin animation styles - Single coin with two sides */
 .coin {
     transition: transform 1s cubic-bezier(0.4, 0.0, 0.2, 1);

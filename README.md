@@ -8,11 +8,15 @@ A browser-based coin flipping game with user authentication, leaderboards, and s
 - ✅ User registration and login (username/password)
 - ✅ Coin flipping game with betting system
 - ✅ Animated coin with fancy design
-- ✅ User profiles with detailed statistics
-- ✅ Real-time leaderboards
+- ✅ User profiles with detailed statistics  
+- ✅ **Real-time multiplayer** with Socket.IO
+- ✅ **Private room system** with invite codes
+- ✅ **XP/Leveling system** with 5 rank tiers
+- ✅ Real-time leaderboards with rankings
 - ✅ Game history tracking
+- ✅ **Role-based admin system** 
 - ✅ Advertisement placement sections
-- ✅ Mobile-responsive design
+- ✅ Mobile-responsive dark theme design
 - ✅ Heroku deployment ready
 
 ### Game Rules
@@ -31,10 +35,11 @@ A browser-based coin flipping game with user authentication, leaderboards, and s
 - Complete game history (last 50 games)
 
 ## Technical Stack
-- **Backend**: Node.js + Express
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Database**: Supabase PostgreSQL
+- **Backend**: Node.js + Express + Socket.IO
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+), Tailwind CSS
+- **Database**: Supabase PostgreSQL with advanced schemas
 - **Authentication**: bcrypt for password hashing + role-based admin system
+- **Real-time**: Socket.IO for multiplayer functionality
 - **Sessions**: express-session
 - **Deployment**: Heroku ready with database persistence
 
@@ -103,9 +108,12 @@ Ready for Google AdSense or other advertising networks.
 - ✅ Database persistence (Supabase PostgreSQL) - **COMPLETED**
 - ✅ Admin role management system - **COMPLETED**
 - ✅ Database migration automation - **COMPLETED**
+- ✅ Real-time multiplayer system - **COMPLETED**
+- ✅ XP/Leveling system - **COMPLETED**
 - 🎁 Daily bonus coins
-- 🏆 Achievement system
-- 👥 Friend system and challenges
+- 🏆 Achievement system  
+- 🏟️ Tournament system
+- 👥 Enhanced friend system and challenges
 - 💰 Different coin types/themes
 - 📊 Enhanced statistics and graphs
 

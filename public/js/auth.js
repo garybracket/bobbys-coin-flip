@@ -55,6 +55,8 @@ async function handleLogin(event) {
         const result = await response.json();
         
         if (result.success) {
+            // Store user data locally for simple session management
+            localStorage.setItem('gameUser', JSON.stringify(result.user));
             showMessage('Login successful! Redirecting...', 'success');
             setTimeout(() => {
                 window.location.href = '/game';
@@ -98,6 +100,8 @@ async function handleRegister(event) {
         const result = await response.json();
         
         if (result.success) {
+            // Store user data locally for simple session management
+            localStorage.setItem('gameUser', JSON.stringify(result.user));
             showMessage('Account created successfully! Redirecting...', 'success');
             setTimeout(() => {
                 window.location.href = '/game';
@@ -112,15 +116,10 @@ async function handleRegister(event) {
 
 // Check if user is already logged in
 window.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const response = await fetch('/api/user');
-        const result = await response.json();
-        
-        if (result.success) {
-            // User is already logged in, redirect to game
-            window.location.href = '/game';
-        }
-    } catch (error) {
-        // User not logged in, stay on login page
+    // Check localStorage for existing user session
+    const storedUser = localStorage.getItem('gameUser');
+    if (storedUser) {
+        // User is already logged in, redirect to game
+        window.location.href = '/game';
     }
 });

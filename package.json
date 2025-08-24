@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "echo 'No build step required for Vercel'",
+    "vercel-build": "echo 'Vercel build complete'"
   },
   "keywords": [
     "game",
@@ -26,6 +28,6 @@
     "socket.io": "^4.8.1"
   },
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   }
 }

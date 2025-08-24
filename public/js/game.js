@@ -3,72 +3,6 @@
 let currentUser = null;
 let isFlipping = false;
 
-// Create audio context for coin flip sound
-function createCoinFlipSound() {
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playSound() {
-            // Create multiple metallic sounds for realistic coin effect
-            const now = audioContext.currentTime;
-            
-            // Create three quick metallic sounds to simulate coin spinning and landing
-            for (let i = 0; i < 3; i++) {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                const filter = audioContext.createBiquadFilter();
-                
-                // High frequency metallic ring
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(2000 + Math.random() * 1000, now + i * 0.1);
-                oscillator.frequency.exponentialRampToValueAtTime(800, now + i * 0.1 + 0.15);
-                
-                // Filter for metallic quality
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(2500, now);
-                filter.Q.setValueAtTime(10, now);
-                
-                // Connect nodes
-                oscillator.connect(filter);
-                filter.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                // Quick attack and decay for metallic "ting"
-                gainNode.gain.setValueAtTime(0, now + i * 0.1);
-                gainNode.gain.linearRampToValueAtTime(0.2 - i * 0.05, now + i * 0.1 + 0.01);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.2);
-                
-                // Start and stop
-                oscillator.start(now + i * 0.1);
-                oscillator.stop(now + i * 0.1 + 0.2);
-            }
-            
-            // Add a subtle low frequency thud for landing
-            const thud = audioContext.createOscillator();
-            const thudGain = audioContext.createGain();
-            
-            thud.type = 'sine';
-            thud.frequency.setValueAtTime(60, now + 0.25);
-            
-            thud.connect(thudGain);
-            thudGain.connect(audioContext.destination);
-            
-            thudGain.gain.setValueAtTime(0.15, now + 0.25);
-            thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-            
-            thud.start(now + 0.25);
-            thud.stop(now + 0.35);
-        }
-        
-        return playSound;
-    } catch (error) {
-        console.log('Audio not supported');
-        return () => {}; // Silent fallback
-    }
-}
-
-const playCoinSound = createCoinFlipSound();
-
 function showMessage(text, type = 'info') {
     const messageEl = document.getElementById('message');
     messageEl.textContent = text;
@@ -83,19 +17,20 @@ function showMessage(text, type = 'info') {
 async function logout() {
     try {
         await fetch('/api/logout', { method: 'POST' });
+        localStorage.removeItem('gameUser');
         window.location.href = '/';
     } catch (error) {
-        showMessage('Error logging out', 'error');
+        localStorage.removeItem('gameUser');
+        window.location.href = '/';
     }
 }
 
 function setBet(amount) {
     const betInput = document.getElementById('betAmount');
-    const totalCoins = (currentUser && currentUser.stats && currentUser.stats.totalCoins) || 0;
     if (amount === 'all') {
-        betInput.value = totalCoins;
+        betInput.value = currentUser.stats.totalCoins;
     } else {
-        betInput.value = Math.min(amount, totalCoins);
+        betInput.value = Math.min(amount, currentUser.stats.totalCoins);
     }
 }
 
@@ -106,12 +41,9 @@ function updateUI() {
         const streakEl = document.getElementById('streak');
         const betAmountEl = document.getElementById('betAmount');
         
-        const totalCoins = (currentUser.stats && currentUser.stats.totalCoins) || 0;
-        const winStreak = (currentUser.stats && currentUser.stats.winStreak) || 0;
-        
-        if (balanceEl) balanceEl.textContent = totalCoins;
-        if (streakEl) streakEl.textContent = winStreak;
-        if (betAmountEl) betAmountEl.max = totalCoins;
+        if (balanceEl) balanceEl.textContent = currentUser.stats.totalCoins;
+        if (streakEl) streakEl.textContent = currentUser.stats.winStreak;
+        if (betAmountEl) betAmountEl.max = currentUser.stats.totalCoins;
         
         // Update level and rank display
         if (currentUser.levelInfo && currentUser.rankInfo) {
@@ -198,9 +130,7 @@ function showResult(result, won, winAmount, newBalance, xpReward, levelInfo, ran
     console.log('Result HTML set, content length:', resultHTML.length);
     
     // Update user stats and level info
-    if (currentUser && currentUser.stats) {
-        currentUser.stats.totalCoins = newBalance;
-    }
+    currentUser.stats.totalCoins = newBalance;
     if (levelInfo) currentUser.levelInfo = levelInfo;
     if (rankInfo) currentUser.rankInfo = rankInfo;
     updateUI();
@@ -225,8 +155,7 @@ async function flipCoin(prediction) {
         return;
     }
     
-    const totalCoins = (currentUser && currentUser.stats && currentUser.stats.totalCoins) || 0;
-    if (betAmount > totalCoins) {
+    if (betAmount > currentUser.stats.totalCoins) {
         showMessage('You don\'t have enough coins for this bet', 'error');
         return;
     }
@@ -248,7 +177,8 @@ async function flipCoin(prediction) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                bet: betAmount,
+                username: currentUser.username,
+                betAmount: betAmount,
                 prediction: prediction
             })
         });
@@ -269,31 +199,17 @@ async function flipCoin(prediction) {
             const flipClass = result.result === 'heads' ? 'flip-heads' : 'flip-tails';
             console.log('Adding flip class:', flipClass);
             
-            // Reset coin to heads state (remove any existing classes)
-            coin.classList.remove('flip-heads', 'flip-tails', 'showing-tails');
+            // Reset coin to neutral state (always start with heads showing)
+            coin.classList.remove('flip-heads', 'flip-tails');
             coin.style.transform = 'rotateY(0deg)';
-            console.log(`[COIN-RESET] Coin reset to heads position for result: ${result.result}`);
+            console.log(`[COIN-RESET] Coin reset to heads position`);
             
             // Force reflow before adding animation class
             void coin.offsetHeight;
             
             setTimeout(() => {
                 coin.classList.add(flipClass);
-                console.log(`[COIN-ANIMATION] Added ${flipClass} class - should end showing ${result.result}`);
-                
-                // After the flip animation, show the correct side
-                setTimeout(() => {
-                    if (result.result === 'tails') {
-                        coin.classList.add('showing-tails');
-                        console.log('[COIN-STATE] Added showing-tails class - coin should now show eagle');
-                    } else {
-                        coin.classList.remove('showing-tails');
-                        console.log('[COIN-STATE] Removed showing-tails class - coin should now show crown');
-                    }
-                }, 1200); // Match the animation duration
-                
-                // Play coin flip sound
-                playCoinSound();
+                console.log('Animation started');
             }, 50);
             
             // Show result after animation - with fallback
@@ -338,32 +254,21 @@ async function flipCoin(prediction) {
     }
 }
 
-
 // Load user data
 window.addEventListener('DOMContentLoaded', async () => {
+    // Check localStorage for user session
+    const storedUser = localStorage.getItem('gameUser');
+    if (!storedUser) {
+        window.location.href = '/';
+        return;
+    }
+    
     try {
-        const response = await fetch('/api/user');
-        const result = await response.json();
-        
-        if (result.success) {
-            currentUser = result.user;
-            
-            // Show daily login bonus if applicable
-            if (result.dailyBonus) {
-                showMessage(`Daily Login Bonus: +${result.dailyBonus.xpGained} XP!`, 'success');
-                if (result.dailyBonus.levelUp) {
-                    setTimeout(() => {
-                        showMessage(`🎊 Level Up! Level ${result.dailyBonus.oldLevel} → ${result.dailyBonus.newLevel}`, 'success');
-                    }, 2000);
-                }
-            }
-            
-            updateUI();
-        } else {
-            // Not authenticated, redirect to login
-            window.location.href = '/';
-        }
+        currentUser = JSON.parse(storedUser);
+        updateUI();
     } catch (error) {
+        console.error('Failed to parse user data:', error);
+        localStorage.removeItem('gameUser');
         window.location.href = '/';
     }
 });
