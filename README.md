@@ -129,7 +129,7 @@ Ready for Google AdSense or other advertising networks.
 
 ## Contributing
 
-This is a personal project by Gary Bracket and Bobby Satchel. Feel free to suggest improvements!
+This is a personal project by Gary McQueen and Bobby Satchel. Feel free to suggest improvements!
 
 ## License
 

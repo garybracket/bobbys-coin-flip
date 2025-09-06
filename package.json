@@ -14,7 +14,7 @@
     "gambling",
     "leaderboard"
   ],
-  "author": "Gary Bracket",
+  "author": "Gary McQueen",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
