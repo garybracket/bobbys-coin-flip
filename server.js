@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
+const cors = require('cors');
 const database = require('./database');
 
 const app = express();
@@ -137,7 +139,36 @@ const sessionMiddleware = session({
   cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 });
 
+// JWT middleware
+const JWT_SECRET = process.env.JWT_SECRET || 'bobbys-coin-flip-jwt-secret-key';
+
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    // Check if session exists (backwards compatibility)
+    if (req.session && req.session.userId) {
+      req.user = { username: req.session.userId };
+      return next();
+    }
+    return res.status(401).json({ success: false, message: 'Access token required' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ success: false, message: 'Invalid token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
 // Middleware
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://bobbys.no-illusion.com', 'https://bobbys-coin-flip.vercel.app'],
+  credentials: true
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
@@ -200,8 +231,20 @@ app.post('/api/register', async (req, res) => {
     return res.json({ success: false, message: 'Failed to create account: ' + result.error });
   }
   
+  // Create JWT token for new user
+  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' });
+  
   req.session.userId = username;
-  res.json({ success: true, message: 'Account created successfully' });
+  res.json({ 
+    success: true, 
+    message: 'Account created successfully',
+    token,
+    user: {
+      username,
+      totalCoins: 100,
+      totalXP: 0
+    }
+  });
 });
 
 app.post('/api/login', async (req, res) => {
@@ -212,8 +255,22 @@ app.post('/api/login', async (req, res) => {
     return res.json({ success: false, message: 'Invalid username or password' });
   }
   
+  // Create JWT token
+  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' });
+  
+  // Keep session for backwards compatibility
   req.session.userId = username;
-  res.json({ success: true, message: 'Login successful' });
+  
+  res.json({ 
+    success: true, 
+    message: 'Login successful',
+    token,
+    user: {
+      username: result.user.username,
+      totalCoins: result.user.total_coins,
+      totalXP: result.user.total_xp
+    }
+  });
 });
 
 app.post('/api/logout', (req, res) => {
@@ -221,12 +278,8 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/api/user', async (req, res) => {
-  if (!req.session.userId) {
-    return res.json({ success: false, message: 'Not authenticated' });
-  }
-  
-  const result = await database.getUserByUsername(req.session.userId);
+app.get('/api/user', authenticateToken, async (req, res) => {
+  const result = await database.getUserByUsername(req.user.username);
   if (!result.success) {
     return res.json({ success: false, message: 'User not found' });
   }
@@ -242,7 +295,7 @@ app.get('/api/user', async (req, res) => {
   if (daysSinceLogin >= 1) {
     // Update last login and give XP bonus
     const newXP = user.total_xp + 20;
-    await database.updateUser(req.session.userId, {
+    await database.updateUser(req.user.username, {
       last_login: now.toISOString(),
       total_xp: newXP
     });
@@ -293,15 +346,11 @@ app.get('/api/user', async (req, res) => {
 });
 
 // Single-player coin flip (database-backed)
-app.post('/api/flip', async (req, res) => {
-  if (!req.session.userId) {
-    return res.json({ success: false, message: 'Not authenticated' });
-  }
-  
+app.post('/api/flip', authenticateToken, async (req, res) => {
   const { bet, prediction } = req.body;
   
   // Get user from database
-  const userResult = await database.getUserByUsername(req.session.userId);
+  const userResult = await database.getUserByUsername(req.user.username);
   if (!userResult.success) {
     return res.json({ success: false, message: 'User not found' });
   }
@@ -354,7 +403,7 @@ app.post('/api/flip', async (req, res) => {
   };
   
   // Update user stats in database
-  await database.updateUserStats(req.session.userId, {
+  await database.updateUserStats(req.user.username, {
     gamesPlayed: newStats.gamesPlayed,
     gamesWon: newStats.gamesWon,
     gamesLost: newStats.gamesLost,
@@ -366,7 +415,7 @@ app.post('/api/flip', async (req, res) => {
   });
   
   // Add to game history
-  await database.addGameHistory(req.session.userId, {
+  await database.addGameHistory(req.user.username, {
     bet,
     prediction,
     result,
@@ -412,12 +461,27 @@ app.post('/api/flip', async (req, res) => {
 
 // Admin helper function
 async function requireAdmin(req, res, next) {
-  if (!req.session.userId) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token && (!req.session || !req.session.userId)) {
     return res.status(401).json({ success: false, message: 'Authentication required' });
   }
 
+  let username;
+  if (token) {
+    try {
+      const user = jwt.verify(token, JWT_SECRET);
+      username = user.username;
+    } catch (err) {
+      return res.status(403).json({ success: false, message: 'Invalid token' });
+    }
+  } else {
+    username = req.session.userId;
+  }
+
   try {
-    const adminCheck = await database.isUserAdmin(req.session.userId);
+    const adminCheck = await database.isUserAdmin(username);
     if (!adminCheck.success) {
       return res.status(500).json({ success: false, message: 'Database error checking admin status' });
     }
@@ -426,6 +490,7 @@ async function requireAdmin(req, res, next) {
       return res.status(403).json({ success: false, message: 'Admin access required' });
     }
 
+    req.user = { username };
     next();
   } catch (error) {
     console.error('Admin check error:', error);
@@ -466,12 +531,8 @@ app.get('/api/leaderboard', async (req, res) => {
   res.json({ success: true, leaderboard: result.leaderboard });
 });
 
-app.get('/api/history', async (req, res) => {
-  if (!req.session.userId) {
-    return res.json({ success: false, message: 'Not authenticated' });
-  }
-  
-  const result = await database.getGameHistory(req.session.userId, 50);
+app.get('/api/history', authenticateToken, async (req, res) => {
+  const result = await database.getGameHistory(req.user.username, 50);
   
   if (!result.success) {
     return res.json({ success: false, message: 'Failed to fetch history' });
