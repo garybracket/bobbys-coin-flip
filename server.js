@@ -573,6 +573,14 @@ io.on('connection', async (socket) => {
     }
     
     const user = userResult.user;
+    
+    // Format user stats from database fields
+    const userStats = {
+      totalCoins: user.total_coins || 0,
+      gamesPlayed: user.games_played || 0,
+      gamesWon: user.games_won || 0,
+      totalXP: user.total_xp || 0
+    };
 
     // Add player to online players
     const playerData = {
@@ -581,7 +589,7 @@ io.on('connection', async (socket) => {
       status: 'online', // online, in_lobby, in_match
       matchId: null,
       roomCode: null,
-      stats: user.stats // Include user stats for coin validation
+      stats: userStats // Include formatted user stats for coin validation
     };
     
     onlinePlayers.set(socket.id, playerData);
@@ -589,7 +597,7 @@ io.on('connection', async (socket) => {
     console.log(`[MP-CONNECT] ${username} connected (${socket.id}), total online: ${onlinePlayers.size}`);
     console.log(`[MP-STATE] Player data:`, playerData);
     
-    socket.emit('connected', { username, stats: user.stats });
+    socket.emit('connected', { username, stats: userStats });
   } catch (error) {
     console.error(`[MP-CONNECTION] Error in connection handler:`, error);
     socket.emit('error', 'Connection initialization failed');
