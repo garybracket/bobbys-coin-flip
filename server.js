@@ -580,7 +580,8 @@ io.on('connection', async (socket) => {
       username: username,
       status: 'online', // online, in_lobby, in_match
       matchId: null,
-      roomCode: null
+      roomCode: null,
+      stats: user.stats // Include user stats for coin validation
     };
     
     onlinePlayers.set(socket.id, playerData);
@@ -639,7 +640,7 @@ io.on('connection', async (socket) => {
     if (!player) return;
     
     // Validate bet amount
-    if (betAmount > user.stats.totalCoins) {
+    if (betAmount > player.stats.totalCoins) {
       socket.emit('error', 'Insufficient coins');
       return;
     }
@@ -664,6 +665,12 @@ io.on('connection', async (socket) => {
     const player = onlinePlayers.get(socket.id);
     
     if (!player) return;
+    
+    // Validate bet amount
+    if (betAmount > player.stats.totalCoins) {
+      socket.emit('error', 'Insufficient coins to create room');
+      return;
+    }
     
     const roomCode = generateRoomCode();
     privateRooms.set(roomCode, {
@@ -699,7 +706,7 @@ io.on('connection', async (socket) => {
       return;
     }
     
-    if (room.betAmount > user.stats.totalCoins) {
+    if (room.betAmount > player.stats.totalCoins) {
       socket.emit('error', 'Insufficient coins for this room');
       return;
     }
