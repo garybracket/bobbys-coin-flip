@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.noillusion.bobbyscoinflip",
+    "sha256_cert_fingerprints": ["F4:F3:87:B4:DC:A3:4C:9A:8B:CE:D4:39:6C:63:6C:8F:36:9E:16:25:7A:8B:59:1E:2B:8A:97:34:97:E8:F5:6E"]
+  }
+}]
