@@ -574,6 +574,9 @@ io.on('connection', async (socket) => {
     
     const user = userResult.user;
     
+    // Debug: Log the actual user object to see what fields we have
+    console.log(`[MP-DEBUG] User object for ${username}:`, JSON.stringify(user, null, 2));
+    
     // Format user stats from database fields
     const userStats = {
       totalCoins: user.total_coins || 0,
@@ -581,6 +584,8 @@ io.on('connection', async (socket) => {
       gamesWon: user.games_won || 0,
       totalXP: user.total_xp || 0
     };
+    
+    console.log(`[MP-DEBUG] Formatted userStats:`, userStats);
 
     // Add player to online players
     const playerData = {
