@@ -4,15 +4,19 @@ A browser-based coin flipping game with user authentication, leaderboards, and s
 
 ## Features
 
-### Current MVP Features
+### Current MVP Features (v1.3.0)
 - ✅ User registration and login (username/password)
 - ✅ Coin flipping game with betting system
 - ✅ Animated coin with fancy design
-- ✅ User profiles with detailed statistics
-- ✅ Real-time leaderboards
-- ✅ Game history tracking
+- ✅ User profiles with detailed statistics and XP/ranking system
+- ✅ Real-time leaderboards with 5-tier ranking system (Novice → Legend)
+- ✅ Game history tracking (last 50 games)
+- ✅ PWA support with service worker and web app manifest
+- ✅ JWT authentication for mobile app compatibility
+- ✅ Password change functionality with secure validation
+- ✅ Admin role system for database management
 - ✅ Advertisement placement sections
-- ✅ Mobile-responsive design
+- ✅ Mobile-responsive design with 44px touch targets
 - ✅ Heroku deployment ready
 
 ### Game Rules
@@ -31,12 +35,13 @@ A browser-based coin flipping game with user authentication, leaderboards, and s
 - Complete game history (last 50 games)
 
 ## Technical Stack
-- **Backend**: Node.js + Express
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Database**: Supabase PostgreSQL
-- **Authentication**: bcrypt for password hashing + role-based admin system
-- **Sessions**: express-session
-- **Deployment**: Heroku ready with database persistence
+- **Backend**: Node.js + Express + Socket.IO (for multiplayer)
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+), Tailwind CSS
+- **Database**: Supabase PostgreSQL with advanced schemas
+- **Authentication**: Hybrid system (express-session + JWT for mobile)
+- **PWA**: Service Worker + Web App Manifest (2025 standards)
+- **Mobile**: Capacitor framework for native app deployment
+- **Deployment**: Heroku with full database persistence
 
 ## Local Development
 
@@ -74,8 +79,9 @@ The application includes role-based administration:
 - Admin role determined by `is_admin` column in users table
 - Replaces previous hardcoded admin check for security
 
-## Deployment to Heroku
+## Deployment
 
+### Web Deployment (Heroku)
 ```bash
 # Create Heroku app
 heroku create bobbys-coin-flip
@@ -87,6 +93,24 @@ git push heroku main
 heroku open
 ```
 
+### Mobile App Deployment
+The app is ready for mobile deployment with PWA and native app support:
+
+#### Android APK Installation
+1. **Latest APK**: `android/bobbys-coin-flip-capacitor-aligned.apk` (v1.3.0)
+2. **Installation**: Use ADB or direct transfer to Android device
+3. **Requirements**: Android 7.0+ (API 24+)
+
+#### Google Play Store (Future)
+- **App Bundle**: `android/bobbys-coin-flip-capacitor-release.aab`
+- **TWA Support**: Enabled with assetlinks.json for Trusted Web App deployment
+- **Package Name**: com.no-illusion.bobbyscoinflip
+
+#### PWA Installation
+- Visit https://bobbys.no-illusion.com on mobile
+- Tap "Add to Home Screen" for app-like experience
+- Works offline with service worker caching
+
 ## Advertisement Integration
 
 The app includes pre-positioned ad spaces for:
@@ -97,15 +121,25 @@ The app includes pre-positioned ad spaces for:
 
 Ready for Google AdSense or other advertising networks.
 
-## Future Feature Ideas
+## Recent Updates (v1.3.0 - September 2025)
 
-### Immediate Enhancements  
+### ✅ Major Features Completed
 - ✅ Database persistence (Supabase PostgreSQL) - **COMPLETED**
 - ✅ Admin role management system - **COMPLETED**
 - ✅ Database migration automation - **COMPLETED**
+- ✅ PWA functionality with service worker - **COMPLETED**
+- ✅ JWT authentication for mobile apps - **COMPLETED**
+- ✅ XP/Leveling system with ranking tiers - **COMPLETED**
+- ✅ Password change functionality - **COMPLETED**
+- ✅ Real-time multiplayer support (Socket.IO) - **COMPLETED**
+- ✅ Private room system for friends - **COMPLETED**
+
+## Future Feature Ideas
+
+### Immediate Enhancements
 - 🎁 Daily bonus coins
 - 🏆 Achievement system
-- 👥 Friend system and challenges
+- 👥 Enhanced friend system and challenges
 - 💰 Different coin types/themes
 - 📊 Enhanced statistics and graphs
 

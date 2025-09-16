@@ -35,6 +35,25 @@ sessions/
 dist/
 build/
 
+# Capacitor/Android (generated, rebuilds automatically)
+android/app/
+android/build/
+android/.gradle/
+android/gradle/
+android/local.properties
+ios/
+
+# APK/AAB files (except releases)
+*.apk
+*.aab
+!releases/*.apk
+!releases/*.aab
+
+# Android signing files (security sensitive)
+*.keystore
+*.jks
+android/bobbys-coin-flip-key.keystore
+
 # Temporary files
 *.tmp
 temp/
